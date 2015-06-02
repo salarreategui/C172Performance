@@ -1,0 +1,828 @@
+/*
+ * Style for small devices like iPhone.
+ * This manages the width of the elements by percentage to allow a variety of wide formats.
+ */
+body {
+	width: 100%;
+	font: normal 13pt Helvetica, Arial, sans-serif;
+	text-shadow: white 0 1px 0;
+	background-color: rgb(220,220,225);
+	-webkit-user-select: none;
+	-webkit-text-size-adjust: none;
+}
+
+/*
+ * Styling for generic elements.
+ * Do this first to override later.
+ */
+h2 {
+	font: bold 13pt Helvetica, Arial, sans-serif;
+}
+
+h3 {
+	font: bold 13pt Helvetica, Arial, sans-serif;
+	margin-left: 10px;
+}
+
+.text p, .text dl, .text li {
+	font: normal 13pt Helvetica, Arial, sans-serif;
+	margin-left: 10px;
+}
+
+ul {
+	margin-left: 0px;
+	padding-left: 1.1em;
+}
+
+li {
+	list-style-type: disc;
+	list-style-position: outside;
+	margin-left: 0px;
+	padding-left: 0px;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+tr {
+	border-top: 1px solid #B4B4B4;
+	min-height: 34px;
+}
+
+td {
+	vertical-align: middle;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	min-height: 25px;
+	height: 25px;
+}
+
+thead tr {
+	border-bottom: 1px solid #B4B4B4;
+}
+
+th {
+	font-weight: bold;
+	text-decoration: underline;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+td:first-child {
+	padding-left: 6px;
+}
+
+td:last-child {
+	padding-right: 6px;
+}
+
+tr:first-child {
+	border-top: 0;
+	/*border-top-left-radius: 8px;border-top-right-radius: 8px;*/
+}
+
+tr:last-child {
+	/*border-bottom-left-radius: 8px;border-bottom-right-radius: 8px;*/
+}
+
+select {
+	color: darkblue;
+	font: bold 12pt Helvetica, Arial, sans-serif;
+}
+
+input {
+	/* The default input styling seems to come out too small without some help. */
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	color: darkblue;
+	padding: 2px;
+}
+
+input[type="button"], button {
+	color: black;
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	background-color: #e8e8e8;
+	border: 1px solid #808080;
+	-webkit-appearance: none;
+	border-radius: 4px;
+	height: 24px;
+	min-width: 24px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.inputButton {
+	float: right;
+	margin-right: 8px;
+	color: black;
+	min-height: 26px;
+}
+
+canvas {
+	font: bold 15pt Helvetica, Arial, sans-serif;
+	margin: 5px;
+}
+
+.Slider {
+	font-weight: bold;
+	padding-top: 0;
+}
+
+.text {
+	text-align: justify;
+	padding: 4px;
+}
+
+.Output {
+	color: darkblue;
+}
+
+.dropdown {
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	background-repeat: no-repeat;
+	background-position: center right;
+	background-image: url("img/dropdown.png");
+	padding-left: 2px;
+	padding-right: 17px;
+}
+
+/*
+ * Some browsers mangle the input width. Adjust.
+ */
+input.n2 {
+	width: 2.5em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n3 {
+	width: 2.75em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n4 {
+	width: 3.25em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n5 {
+	width: 4em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n6 {
+	width: 4.5em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n7 {
+	width: 6.5em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.n8 {
+	width: 7em;
+	padding: 2px;
+	text-align: right;
+}
+
+input.S4 {
+	min-width: 3em;
+	max-width: 3.25em;
+	padding: 2px;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S5 {
+	min-width: 3em;
+	max-width: 4em;
+	padding: 2px;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S6 {
+	min-width: 4em;
+	max-width: 5em;
+	padding: 2px;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S7 {
+	min-width: 4em;
+	max-width: 6em;
+	padding: 2px;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+/*
+ * Style the header bar and nav buttons.
+ */
+
+#Header {
+	display: block;
+}
+
+#Header, #HelpHeader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+.headerBar {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+
+	background-color: rgb(100,100,110);
+	font: bold 14pt Helvetica, Arial, sans-serif;
+	border-bottom: 1px solid rgb(45, 54, 66);
+	-webkit-box-sizing: border-box;
+}
+
+.headerBar td:first-child, .headerBar td:last-child {
+	width: 105px;
+}
+
+.headerBar td:nth-child(2), .headerBar td:nth-child(2) {
+	text-align: center;
+	color: white;
+	font: bold 14pt Helvetica, Arial, sans-serif;
+	text-shadow: #2d3642 0 -1px 0;
+	white-space: nowrap;
+}
+
+.headerBar td button {
+	margin-top: auto;
+	margin-bottom: auto;
+	/* base metrics used to ensure a minumum size and specify a max size that can be used to trim the contents */
+	max-width: 100px;
+
+	/* set up the font appearance */
+	font: bold 16px Helvetica, Arial, sans-serif;
+	text-align: center;
+	color: white;
+
+	background-color: rgb(160,160,170);
+	border: 1px solid black;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.headerBar td:last-child button {
+	float: right;
+}
+
+.headerBar td:first-child button {
+	float: left;
+}
+
+@media screen and (max-device-width: 480px) {
+	.headerBar {
+		height: 44px;
+	}
+
+	.headerBar td button {
+		min-width: 45px;
+		height: 32px;
+	}
+
+	button {
+		height: 32px;
+		min-width: 32px;
+	}
+}
+
+@media screen and (min-device-width: 481px) {
+	.headerBar {
+		height: 54px;
+	}
+
+	.headerBar td button {
+		min-width: 54px;
+		height: 46px;
+	}
+
+	button {
+		height: 46px;
+		min-width: 46px;
+	}
+}
+
+.backButton {
+	background-image: url("img/chevron-left-white.png");
+	background-repeat: no-repeat;
+	background-position: 4px 50%;
+	padding-left: 16px !important;
+}
+
+/*
+ * Style the Index pages.
+ */
+.Index {
+	display: none;		/* turned on in selectPage() */
+	position: fixed;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+
+	font: bold 14pt Helvetica, Arial, sans-serif;
+	color: black;
+}
+
+.unselected-tab {
+	/* Not used in the Small UI */
+}
+
+.selected-tab {
+	/* Not used in the Small UI */
+}
+
+.Index table {
+	width: 100%;
+	border-collapse: collapse;
+	background-color: white;
+}
+
+.Index tr {
+	padding: 0px;
+}
+
+.Index td {
+	font-size: 13pt;
+}
+
+.Index tr:first-child td {
+	border-top: 1px solid #B4B4B4;
+}
+
+.Index tr td {
+	border-bottom: 1px solid #B4B4B4;
+	height: 50px;
+}
+
+@media screen and (max-device-height: 480px) {
+	.Index tr td {
+		height: 44px;
+	}
+}
+
+.Index tr td:last-child {
+	content: " ";
+	background-image: url("img/chevron-right-grey.png");
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	width: 25px;
+}
+
+.unselected-list {
+	/* Not used in the Small UI */
+}
+
+.selected-list {
+	/* Not used in the Small UI */
+}
+
+/*
+ * Style the regular pages
+ */
+.page, .mpage {			/* page and mpage are the same in SmallUI */
+	display: none;		/* turned on in selectPage() */
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media screen and (max-device-width: 480px) {
+	.Index, .page, .mpage {
+		top: 44px;
+	}
+}
+
+@media screen and (min-device-width: 481px) {
+	.Index, .page, .mpage {
+		top: 54px;
+	}
+}
+
+/*
+ * Style warnings and the warning at the top of the page when using the default aircraft parameters.
+ */
+.defaultWarn, .warn {
+	color: red;
+}
+
+/*
+ * Style the basic layout of the pages.
+ * For SmallUI style, the input area is followed by the output area.
+ */
+#TripInput, #TripInput2, #WBInput, #DepInput, #EnrtInput, #DestInput, #EmergInput {
+}
+
+#WBOutput, #DepOutput, #EnrtOutput, #DestOutput, #InstrOutput, #EmergOutput {
+	/*margin-top: 12px;*/
+}
+
+#TripInput, #TripInput2, #WBInput, #DepInput, #EnrtInput, #DestInput, #EmergInput,
+#WBOutput, #DepOutput, #EnrtOutput, #DestOutput, #EmergOutput {
+	padding-left: 3px;
+	padding-right: 3px;
+	padding-bottom: 3px;
+}
+
+#TripInput, #TripInput2, #WBInput, #DepInput, #EnrtInput, #DestInput, #EmergInput,
+#WBOutput, #DepOutput, #EnrtOutput, #DestOutput, #DPOutput, #APOutput, #EmergOutput {
+}
+
+#TOUPage .border {
+	margin-top: 10px;
+}
+
+/*
+ * Style the major page classes
+ */
+.borderHeader {
+	width: 100%;
+}
+
+.borderHeader td {
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	padding-left: 4px;
+	padding-right: 4px;
+	vertical-align: middle;
+}
+
+.border {
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	margin: 4px;
+	padding: 0px;
+	border-radius: 8px;
+	border-top: 1px solid rgb(217,217,217);
+	background-color: white;
+}
+
+.iTable, .oTable, .coldTable {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+@media screen and (max-device-width: 480px) {
+	.borderHeader {
+		min-height: 25px;
+	}
+
+	.iTable tr {
+		height: 44px;	/* make input rows a bit bigger */
+	}
+
+	.oTable tr {
+		height: 36px;
+	}
+}
+
+@media screen and (min-device-width: 481px) {
+	.borderHeader {
+		min-height: 54px;
+	}
+
+	.iTable tr {
+		height: 48px;	/* make input rows a bit bigger */
+	}
+
+	.oTable tr {
+		height: 40px;
+	}
+}
+
+/*
+ * Style error rows.
+ */
+.errRow, .addRow {
+	display: none;		/* turned on in setIOError() */
+	border-top: 0;		/* no border between error and element */
+}
+
+.errRow td {
+	padding-top: 0;
+	padding-bottom: 0;
+	min-height: 0;
+	height: 0;
+}
+
+/*
+ * Style the general Input and Output column layout on each page.
+ */
+.iTable td:first-child,
+.oTable td:first-child {
+	text-align: left;
+}
+
+.canvasCell,
+.iTable td[colspan="2"] {
+	text-align: center;
+}
+
+.iTable td:nth-child(2),
+.oTable td:nth-child(2),
+.oTable td:nth-child(4) {
+	text-align: left;
+	white-space: nowrap;
+}
+
+.oTable td:nth-child(3) {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.errRow td:nth-child(2),
+#DepRunwaysText, #DestRunwaysText,
+#APMinVDPInfo {
+	white-space: normal;
+}
+
+.oTable td:first-child,
+.oTable td:nth-child(3) {
+	padding-right: 4px;
+}
+
+/*
+ * Style specific pages.
+ */
+#TripPage .iTable td:first-child {
+	width: 35%;
+}
+
+#WBPage .iTable td:first-child, #WBPage .oTable td:first-child{
+	width: 42%;
+}
+
+#EnrtPage .iTable td:first-child, #EnrtPage .oTable td:first-child {
+	width: 40%;
+}
+
+#DepPage .oTable td:first-child,
+#DestPage .oTable td:first-child,
+#APPage .iTable td:first-child, #APPage .oTable td:first-child,
+#DPPage .iTable td:first-child, #DPPage .oTable td:first-child,
+#EmergPage .iTable td:first-child, #EmergPage .oTable td:first-child {
+	width: 50%;
+}
+
+#HoldPage .iTable td:first-child, #HoldPage .oTable td:first-child {
+	width: 140px;
+}
+
+#HoldPage .iTable td:nth-child(2), #HoldPage .oTable td:nth-child(2) {
+	white-space: normal;
+}
+
+#DepPage .iTable td:first-child,
+#DestPage .iTable td:first-child {
+	width: 49%;
+}
+
+#ACPage .iTable td:first-child,
+#SetPage .iTable td:first-child {
+	width: 60%;
+}
+
+#TOUPage .text p {
+	padding-left: 0px;
+}
+
+#DepCruiseProf {		/* fix up extra mobile Safari space */
+	max-width: 180px;
+}
+
+.coldTable td,
+.coldTable th {
+	text-align: center;
+}
+
+.coldTable td {
+	min-height: 16px;
+	height: 16px;
+}
+
+#ClearRiskButton {
+	min-width: 75px;
+}
+
+#EmergGlideTable table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+#EmergGlideTable tr {
+	border-top: 0;
+	min-height: 16px;
+}
+
+#EmergGlideTable td {
+	padding-left: 0;
+	padding-right: 0;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+#EmergGlideDist {
+	font-size: 13pt;
+}
+/*
+ * Style dialogs.
+ */
+#dialog-wrapper {
+	position: fixed;
+	z-index: 1000;
+	top: 0px;
+	left: 0px;
+	background-color: white;
+	border-radius: 8px;
+	border: 4px solid #B4B4B4;
+	padding: 4px;
+}
+
+#dialog-wrapper table {
+	width: 100%;
+	text-align: center;
+}
+#dialog-wrapper table td {
+	padding: 4px;
+}
+
+#dialog-text {
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+	max-width: 600px;
+	font-size: 11pt;
+	font-weight: normal;
+	margin: 4px;
+	text-align: left;
+}
+
+#dialog-text h1
+ {
+	font-size: 12pt;
+	font-weight: bold;
+}
+
+#dialog-text p {
+	margin-bottom: .5em;
+}
+
+#dialog-text ul {
+	margin-top: .5em;
+}
+
+.dialog-button {
+	min-width: 65px;
+	margin-top: 15px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 6px;
+	text-align: center;
+	display: block;
+}
+
+.smallDialog {
+	transform: scale(.3, .3);
+	-webkit-transform: scale(.3, .3);
+}
+
+.largeDialog {
+	transform: scale(1, 1);
+	-webkit-transform: scale(1, 1);
+	transition: transform 150ms linear;
+	-webkit-transition: -webkit-transform 150ms linear;
+}
+
+/*
+ * Style Help
+ */
+#HelpPage {
+	display: none;		/* turned on in selectPage() */
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+#HelpContent {
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+#HelpTOC {
+	margin: 4px;
+	padding: 4px;
+	border-radius: 8px;
+	border-top: 1px solid rgb(217,217,217);
+	background-color: white;
+}
+
+#HelpText {
+	margin: 4px;
+	padding: 4px;
+	border-radius: 8px;
+	border-top: 1px solid rgb(217,217,217);
+	background-color: white;
+}
+
+@media screen and (max-device-width: 480px) {
+	#HelpPage, #HelpContent {
+		top: 44px;
+	}
+}
+
+@media screen and (min-device-width: 481px) {
+	#HelpPage, #HelpContent {
+		top: 54px;
+	}
+}
+
+.cRef {
+	text-decoration: underline;
+	color: blue;
+}
+
+.TOC {
+	padding: 4px;
+}
+
+/*
+ * Metar
+ */
+
+.Metar {
+	width: 100%;
+}
+
+.Metar td:first-child {
+	text-align: left;
+	width: 99% !important;
+}
+
+.Metar td:last-child {
+	text-align: center;
+	padding: 0px;
+}
+
+.Metar button {
+	height: 38px;
+	width: 38px;
+}
+
+#DepMetarText, #DestMetarText {
+	white-space: normal;
+	padding-left: 0px;
+	padding-right: 4px;
+}
+
+@-webkit-keyframes spin {
+	0%   {-webkit-transform: rotate(0deg)}
+	100% {-webkit-transform: rotate(360deg)}
+}
+
+/*
+ * Miscellaneous elements
+ */
+#AppState {
+	margin: 4px;
+	padding: 0px;
+	border-radius: 8px;
+	border: 1px solid #B4B4B4;
+	text-align: left;
+	-webkit-user-select: text;
+}
+
+@media screen and (max-device-width: 480px) {
+	#HoldCanvas {
+		width: 290px;
+		height: 290px;
+	}
+}
+
+@media screen and (min-device-width: 481px) {
+	#HoldCanvas {
+		width: 400px;
+		height: 400px;
+	}
+}

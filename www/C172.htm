@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html manifest="C172.manifest">
+<head>
+
+<meta http-equiv="x-ua-compatible" content="IE=9,10,11" /> <!-- Avoid IE compatitibility mode -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0,  maximum-scale=1.0, user-scalable=no" />
+
+<link href="img/C172-icon-webapp-76-precomposed.png" rel="apple-touch-icon-precomposed" />
+<link href="img/C172-icon-webapp-76-precomposed.png" sizes="76x76" rel="apple-touch-icon-precomposed" />
+<link href="img/C172-icon-webapp-120-precomposed.png" sizes="120x120" rel="apple-touch-icon-precomposed" />
+<link href="img/C172-icon-webapp-152-precomposed.png" sizes="152x152" rel="apple-touch-icon-precomposed" />
+<link href="img/C172-splash-iphone-port.png" rel="apple-touch-startup-image"
+	media="screen and (max-device-height: 480px)" />
+<link href="img/C172-splash-iphone-port-2x.png" rel="apple-touch-startup-image"
+	media="screen and (min-device-height: 481px) and (max-device-height: 568px)" />
+<link href="img/C172-splash-ipad-land.png" rel="apple-touch-startup-image"
+	media="screen and (min-device-height: 569px) and (orientation:landscape)" />
+<link href="img/C172-splash-ipad-port.png" rel="apple-touch-startup-image"
+	media="screen and (min-device-height: 569px) and (orientation:portrait)" />
+
+<!--
+Android Nexus 7 has a device width in portrait of 600.
+Apple iPad Mini reports the same dimensions as iPad (768 x 1024).
+On IOS devices the device-width is the same regardless of orientation, though "width" changes.
+The media attributes will be adjusted based on device later.
+-->
+<!-- CSS for small UI. For displays less than MiniTab in width -->
+<link href="common/small.css" id="SmallCSS" rel="stylesheet" type="text/css"
+	media="screen and (max-width: 767px)" />
+<!-- CSS for wider devices or desktop, handle 768px width in landscape for Apple. Note IE9 always gets Desktop -->
+<link href="common/desktop.css" id="DesktopCSS" rel="stylesheet" type="text/css"
+	media="screen and (min-width: 768px)" />
+<!-- Special CSS for iPad (and mini) in portrait mode. Desktop.css tweaked to exactly 768px -->
+<link href="common/iPadP.css" id="iPadPCSS" rel="stylesheet" type="text/css"
+	media="tty" />
+
+<link href="common/thumbwheel.css" rel="stylesheet" type="text/css" media="screen" />
+<link href="common/vernierslider.css" rel="stylesheet" type="text/css" media="screen" />
+<link href="common/keypad.css" rel="stylesheet" type="text/css" media="screen" />
+
+<script type="text/javascript">
+
+var gStart = new Date();
+
+var gConsole = false;		// display in-app console for pr()
+
+var VERSION = "2.4.0";		// current app version
+
+var gversionText
+	= "<h1>Version: " + VERSION + "</h1>"
+	+ "<p>Latest changes:</p><ul>"
+	+ "<li>Added 172N</li>"
+	+ "<li style=\"color:red;\">\
+		Fixed bug where aircraft weight may not be saved when more than one aircraft is defined.\
+		Previously defined aircraft without weights will be discarded.</li>"
+	+ "<li>Allow trips to specify using whatever aircraft is currently selected.</li>"
+	+ "</ul>"
+	+ "<p>Recent changes:</p><ul>"
+	+ "<li>Get nearby METARs if airport METAR is unavailable</li>"
+	+ "</ul>";
+
+var TOU_VERSION = "V3";				// current terms of use version
+
+var TITLESTRING = "Cessna 172 Performance";
+
+//if (navigator.userAgent.search(/MSIE \d.\d;/) >= 0) {
+//	if (navigator.userAgent.replace(/.*MSIE (\d)\.\d;.*/, "$1") < 9) {
+//		alert("This WebApp will not function properly with this version of Internet Explorer. Please use IE9+, Firefox, Safari, or Chrome");
+//	}
+//}
+
+/*
+ * Device characteristics. Set up below.
+ */
+var gDev = {
+	platform: "desktop",	// platform, Mobile OS, or generic desktop browser
+	mobile: false,			// true if this is a small mobile device (phone)
+	touch: false,			// true if this device has a touch interface (i.e. not a mouse).
+	phoneGap:false,			// true if this is a native app.
+	viewWidth: 0,			// viewport width in px
+	viewHeight:0,			// viewport height in px
+	portWidth: 0,			// viewport width in px in portrait orientation
+	landWidth: 0			// viewport width in px in landscape orientation
+};
+
+/*
+ * User interface parameters.
+ */
+var gUI = {
+	style: "desktop",			// UI style. "desktop", "small"
+};
+
+/*
+ * Discover the platform type
+ */
+if (navigator.userAgent.match(/iPhone|iPod/)) {
+	gDev.platform = "iPhone";	// iPhone and iPod share identical WebApp properties
+} else if (navigator.userAgent.match(/iPad/)) {
+	gDev.platform = "iPad";
+} else if (navigator.userAgent.match(/Android/)) {
+	gDev.platform = "Android";
+} else if (navigator.userAgent.match(/Symbian/)) {
+	gDev.platform = "Symbian";
+} else if (navigator.userAgent.match(/BlackBerry|BB10/)) {
+	gDev.platform = "Blackberry";
+} else if (navigator.userAgent.match(/IEMobile/)) {
+	gDev.platform = "WinPhone";
+} else {
+	gDev.platform = "desktop";	// Generic desktop browser
+}
+
+/*
+ * Discover whether we're on a small mobile device.
+ */
+gDev.mobile = !!navigator.userAgent.match(/Mobile/);
+
+/*
+ * Discover whether we're on a touch enabled device.
+ * We assume all non-desktop devices are touch enabled.
+ */
+gDev.touch = window.Touch || (!!navigator.userAgent.match(/Touch/) || gDev.platform != "desktop");
+
+/*
+ * A location.href that begins with "file:" on a non-desktop platform is probably PhoneGap
+ */
+gDev.phoneGap = (gDev.platform != "desktop" && document.location.protocol == "file:");
+
+/*
+ * Landscape and portrait widths.
+ * Uses verge technique to find default viewport widths in landscape and portrait.
+ */
+gDev.viewWidth = Math.max(document.documentElement.clientWidth, window.innerWidth);
+gDev.viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+gDev.portWidth = Math.min(gDev.viewWidth, gDev.viewHeight);
+gDev.landWidth = Math.max(gDev.viewWidth, gDev.viewHeight);
+
+/*
+ * Use small UI on iPhone and other phone. Used on devices that are not tablets.
+ * We use the presence on "Mobile" to detect this.
+ */
+if (gDev.platform == "iPhone"
+	|| (gDev.platform != "desktop" && gDev.platform != "iPad" && gDev.mobile)
+	|| (gDev.platform == "Android" && gDev.portWidth < 768)
+) {
+	gUI.style = "small";
+} else {
+	gUI.style = "desktop";
+}
+
+/*
+ * Set up the viewport and which CSS will be used.
+ */
+if (gUI.style == "small") {
+	// Small device. Only use SmallCSS and disable the others by setting them to display on "tty"
+	document.getElementById("SmallCSS").media = "screen";
+	document.getElementById("iPadPCSS").media = "tty";			// turn off
+	document.getElementById("DesktopCSS").media = "tty";		// turn off
+} else {
+	// Tablet or desktop, disable small UI
+	document.getElementById("SmallCSS").media = "tty";			// turn off
+	switch (gDev.platform) {
+	case "iPad":
+		// On iPads (and Mini) use DesktopCSS in landscape and iPadPCSS portrait mode.
+		// Set media attributes to toggle between the two automatically.
+		document.getElementById("DesktopCSS").media = "screen and (orientation: landscape)";
+		document.getElementById("iPadPCSS").media = "screen and (orientation: portrait)";
+		break;
+	case "Android":
+		// We're going to behave as if we have at least 768px width in each orientation.
+		// Android (at least) seems to ignore setting the viewport width directly and disabling user scaling.
+		// Android also ignores viewport scaling in WebViews (i.e. on the native App but not via Chrome).
+		if (gDev.portWidth > 768) {
+			// Both orientations are > 768px. Just use Desktop.
+			document.getElementById("iPadPCSS").media = "tty";		// turn off
+			document.getElementById("DesktopCSS").media = "screen";
+		} else if (gDev.portWidth == 768) {
+			// portrait is 768px and landscape is >= 768px. Use Desktop for landscape and iPadPCSS for portrait
+			// The portrait scale is adjusted in fixScale() to make it be 768px.
+			document.getElementById("DesktopCSS").media = "screen and (orientation: landscape)";
+			document.getElementById("iPadPCSS").media = "screen and (orientation: portrait)";
+		} else {
+			// portrait < 768px. Uses small UI above.
+		}
+		break;
+	case "desktop":
+		// Desktop. MS Surface probably ends up here.
+		document.getElementById("iPadPCSS").media = "tty";			// turn off
+		document.getElementById("DesktopCSS").media = "screen";
+		// Allow scaling
+		document.getElementById("viewport").content
+			= "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.5, user-scalable=yes";
+		break;
+	default:
+		// We're going to behave as if we have at least 768px width in each orientation.
+		if (gDev.portWidth > 768) {
+			// Both orientations are > 768px. Just use Desktop.
+			document.getElementById("iPadPCSS").media = "tty";		// turn off
+			document.getElementById("DesktopCSS").media = "screen";
+		} else if (gDev.landWidth > 768) {
+			// portrait is <= 768px and landscape is > 768px. Use Desktop for landscape and iPadPCSS for portrait
+			// The portrait scale is adjusted in setupScale() to make it be 768px.
+			document.getElementById("DesktopCSS").media = "screen and (orientation: landscape)";
+			document.getElementById("iPadPCSS").media = "screen and (orientation: portrait)";
+		} else {
+			// Both orientations are < 768px. Just use iPadPCSS.
+			// The scale is adjusted in setupScale() to make it be 768px.
+			document.getElementById("iPadPCSS").media = "screen";
+			document.getElementById("DesktopCSS").media = "tty";	// turn off
+		}
+		break;
+	}
+}
+
+/*
+ * Unique ID for this aircraft.
+ * Used to differentiate storage keys when using multiple WebApps for different aircraft types and Ajax requests.
+ */
+var gAppID = "C172";	// unique ID prepended to storage keys when using with multiple model WebApps
+
+/*
+ * The base URL for Ajax requests.
+ * By default it's the base URL for this file. If the WebApp is invoked locally or through PhoneGap then use pohperformance.com.
+ */
+var gAjaxURL = location.href.replace(/\/[^\/]*$/, "/");	// strip off the last name in the current URL
+if (gDev.phoneGap) {
+	gAjaxURL = "http://www.pohperformance.com/" + gAppID + "/";
+} else if (document.location.protocol == "file:") {
+	gAjaxURL = "http://www.pohperformancetest.com/" + gAppID + "/";
+}
+if (location.href.match(/pohperformancetest\.com/)) {
+	alert("You are using a test site. Please use http://pohperformance.com/"+gAppID+"/"+gAppID+".htm instead");
+}
+
+/*
+ * If there's an application cache, alert the user when a new version is available and reload.
+ */
+if (window.applicationCache) {
+	// Swap in newly download files when update is ready
+	window.applicationCache.addEventListener(
+		'updateready',
+		function(){
+			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+				notice("Updating to new version", function () {
+						window.applicationCache.swapCache();
+						window.location.reload();
+					}
+				);
+			}
+		},
+		false
+	);
+	// Let the user know when there's an application cache error.
+	window.applicationCache.addEventListener(
+		'uncached',
+		function(){
+			notice("Application cache error: application will not be available offline");
+		},
+		false
+	);
+}
+
+/*
+ * Updates the application cache and reload the document.
+ * Called by the reload button.
+ */
+function reloadWebApp () {
+	if (navigator.onLine == undefined || navigator.onLine) {
+		if (window.applicationCache) {
+				window.applicationCache.update();
+		}
+		location.reload();
+	} else {
+		notice("Not online. Try again later");
+	}
+}
+
+/*
+ * Debug code to display application cache states
+ */
+/*
+if (window.applicationCache) {
+	var cacheStatusValues = [];
+	cacheStatusValues[0] = 'uncached';
+	cacheStatusValues[1] = 'idle';
+	cacheStatusValues[2] = 'checking';
+	cacheStatusValues[3] = 'downloading';
+	cacheStatusValues[4] = 'updateready';
+	cacheStatusValues[5] = 'obsolete';
+
+	// Listeners for all possible events
+	var cache = window.applicationCache;
+	cache.addEventListener('cached', logCacheEvent, false);
+	cache.addEventListener('checking', logCacheEvent, false);
+	cache.addEventListener('downloading', logCacheEvent, false);
+	cache.addEventListener('error', logCacheEvent, false);
+	cache.addEventListener('noupdate', logCacheEvent, false);
+	cache.addEventListener('obsolete', logCacheEvent, false);
+	cache.addEventListener('progress', logCacheEvent, false);
+	cache.addEventListener('updateready', logCacheEvent, false);
+
+}
+
+// Log every event to the console
+function logCacheEvent(e) {
+	var online, status, type, message;
+
+	online = (navigator.onLine) ? 'yes' : 'no';
+	status = cacheStatusValues[window.applicationCache.status];
+	type = e.type;
+	message = 'online: ' + online;
+	message+= ', event: ' + type;
+	message+= ', status: ' + status;
+	if (type == 'error' && navigator.onLine) {
+		message+= ' (prolly a syntax error in manifest)' + JSON.stringify(e);
+	}
+	logMsg(message);
+}
+*/
+
+</script>
+
+<script src="common/util.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/io.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/common.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/runwayData.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/airportData.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/json2.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/thumbwheel.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/vernierslider.js" type="text/javascript" charset="utf-8"></script>
+<script src="common/keypad.js" type="text/javascript" charset="utf-8"></script>
+<script src="C172Data.js" type="text/javascript" charset="utf-8"></script>
+<script src="C172.js" type="text/javascript" charset="utf-8"></script>
+
+<title>Cessna 172 Performance</title>
+
+</head>
+
+<body id="Body" class="body" onload="C172setup()">
+
+<table id="Header" class="headerBar" style="display:none;">
+	<tr>
+		<td><button type="button" id="backButton" class="backButton" style="display:none" onclick="pageBack()"></button></td>
+		<td><span id="PageTitle">Home</span></td>
+		<td></td>
+	</tr>
+</table>
+
+<div id="HomeIndex" style="display:none">
+	<!-- Home page list. This is transformed by setupIndex() -->
+</div>
+
+<div id="TripPage" class="page">
+	<div id="TripInput">
+	<table class="borderHeader">
+		<td>Settings</td>
+		<td>
+			<button type="button" class="inputButton" onclick="showHelp('HelpTrip')">Help</button>
+			<button type="button" id="TripEditButton" class="inputButton" onclick="editTrip()">Edit</button>
+		</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Trip:</td>
+			<td>
+				<select id="SelectedTrip">
+					<option value="0">[Current]</option>
+				</select></td>
+		</tr><tr id="editTripButtons">
+			<td></td>
+			<td>
+				&emsp; <button type="button" id="addTripButton" onclick="newTrip()">New</button>
+				&emsp; <button type="button" id="delTripButton" onclick="deleteTrip()">Delete</button></td>
+		</tr>
+	</table>
+	</div>
+
+	<div id="TripNameContainer">
+		<table class="borderHeader">
+			<td>Trip Name</td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>Trip name:</td>
+				<td>
+					<input type="text" id="TripName" value="" /></td>
+			</tr>
+		</table>
+		</div>
+	</div>
+
+	<table class="borderHeader">
+		<td>Weight and Balance</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Fuel:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Fuel_gal"><input type="number" id="TripWBFuel_gal" /></span>
+				<span  class="Fuel_l"><input type="number" id="TripWBFuel_l" /></span></td>
+			<td style="text-align:left;">
+				<span class="Fuel_gal">gal.&nbsp;(&le;<span id="TripWBFuelMax_gal"></span>)</span>
+				<span class="Fuel_l">l.&nbsp;(&le;<span id="TripWBFuelMax_l"></span>)</span></td>
+		</tr><tr>
+			<td>Fuel used:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Fuel_gal"><input type="number" id="TripWBFuelUsed_gal" /></span>
+				<span  class="Fuel_l"><input type="number" id="TripWBFuelUsed_l" /></span></td>
+			<td style="text-align:left;">
+				<span class="Fuel_gal">gal.&nbsp;(&le;<span id="TripWBFuelUsedMax_gal"></span>)</span>
+				<span class="Fuel_l">l.&nbsp;(&le;<span id="TripWBFuelUsedMax_l"></span>)</span></td>
+		</tr><tr>
+			<td>Fuel to dest.:</td>
+			<td colspan="2" style="text-align:center;">
+				<span id="TripFuelToDest_gal" class="Fuel_gal"></span>
+				<span id="TripFuelToDest_l" class="Fuel_l"></span></td>
+			<td style="text-align:left;">
+				<span  class="Fuel_gal">gal.</span>
+				<span  class="Fuel_l">l.</span></td>
+		</tr><tr>
+			<td>Row 1:</td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBRow1L_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBRow1L_kg" /></span></td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBRow1R_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBRow1R_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.</span>
+				<span class="Weight_kg">kg.</span></td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="TripWBRow1Error"></span></td>
+		</tr><tr>
+			<td>Row 2:</td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBRow2L_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBRow2L_kg" /></span></td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBRow2R_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBRow2R_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.</span>
+				<span class="Weight_kg">kg.</span></td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="TripWBRow2Error"></span></td>
+		</tr><tr>
+			<td>Baggage area&nbsp;1:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBBaggage1_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBBaggage1_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.&nbsp;(&le;120)</span>
+				<span class="Weight_kg">kg.&nbsp;(&le;54)</span></td>
+		</tr><tr>
+			<td>Baggage area&nbsp;2:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="TripWBBaggage2_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="TripWBBaggage2_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.&nbsp;(&le;50)</span>
+				<span class="Weight_kg">kg.&nbsp;(&le;23)</span></td>
+		</tr>
+	</table>
+	</div>
+	</div><!--TripInput-->
+
+	<div id="TripInput2">
+	<table class="borderHeader">
+		<td>Departure</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Airport:</td>
+			<td>
+				<input type="text" id="TripDepArpt" /></td>
+		</tr>
+	</table>
+	</div>
+
+	<table class="borderHeader">
+		<td>Enroute</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Cruise altitude:</td>
+			<td>
+				<input type="number" id="TripEnrtAltH" />&thinsp;00&thinsp;ft.</td>
+		</tr><tr>
+			<td>Route distance:</td>
+			<td>
+				<input type="number" id="TripEnrtDist" /> nm.</td>
+		</tr><tr>
+			<td>Dest. distance:</td><td><span id="TripEnrtDestDist"> </span></td>
+		</tr>
+	</table>
+	</div>
+
+	<table class="borderHeader">
+		<td>Destination</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Airport:</td>
+			<td>
+				<input type="text" id="TripDestArpt" /></td>
+		</tr>
+	</table>
+	</div>
+
+	<table class="borderHeader">
+		<td>Aircraft</td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Registration number:</td>
+			<td>
+				<select id="TripSelectedAC">
+					<option value="[Any]">[Any]</option>
+				</select></td>
+			</tr>
+	</table>
+	</div>
+	</div><!--TripInput2-->
+</div>
+
+<div id="WBPage" class="page">
+	<div id="WBInput">
+	<table class="borderHeader">
+		<td>Settings&emsp;<span class="pageInputHeading"></span></td>
+		<td><button type="button" class="inputButton" onclick="showHelp('HelpWB')">Help</button></td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Fuel:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Fuel_gal"><input type="number" id="WBFuel_gal" /></span>
+				<span  class="Fuel_l"><input type="number" id="WBFuel_l" /></span></td>
+			<td style="text-align:left;">
+				<span class="Fuel_gal">gal.&nbsp;(&le;<span id="WBFuelMax_gal"></span>)</span>
+				<span class="Fuel_l">l.&nbsp;(&le;<span id="WBFuelMax_l"></span>)</span></td>
+		</tr><tr>
+			<td>Use fuel to destination:</td>
+			<td colspan="2" style="text-align:center;">
+				<input type="checkbox" id="WBEnrtFuelToDest" /></td>
+			<td></td>
+		</tr><tr>
+			<td>Fuel used:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Fuel_gal"><input type="number" id="WBFuelUsed_gal" /></span>
+				<span  class="Fuel_l"><input type="number" id="WBFuelUsed_l" /></span></td>
+			<td style="text-align:left;">
+				<span class="Fuel_gal">gal.&nbsp;(&le;<span id="WBFuelUsedMax_gal"></span>)</span>
+				<span class="Fuel_l">l.&nbsp;(&le;<span id="WBFuelUsedMax_l"></span>)</span></td>
+		</tr><tr>
+			<td>Fuel to dest.:</td>
+			<td colspan="2" style="text-align:center;">
+				<span id="WBFuelToDest_gal" class="Fuel_gal"></span>
+				<span id="WBFuelToDest_l" class="Fuel_l"></span></td>
+			<td style="text-align:left;">
+				<span  class="Fuel_gal">gal.</span>
+				<span  class="Fuel_l">l.</span></td>
+		</tr><tr>
+			<td>Row 1:</td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBRow1L_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBRow1L_kg" /></span></td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBRow1R_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBRow1R_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.</span>
+				<span class="Weight_kg">kg.</span></td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="WBRow1Error"></span></td>
+		</tr><tr>
+			<td>Row 2:</td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBRow2L_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBRow2L_kg" /></span></td>
+			<td style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBRow2R_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBRow2R_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.</span>
+				<span class="Weight_kg">kg.</span></td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="WBRow2Error"></span></td>
+		</tr><tr>
+			<td>Baggage area&nbsp;1:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBBaggage1_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBBaggage1_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.&nbsp;(&le;120)</span>
+				<span class="Weight_kg">kg.&nbsp;(&le;54)</span></td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="WBBaggage1Error"></span></td>
+		</tr><tr>
+			<td>Baggage area&nbsp;2:</td>
+			<td colspan="2" style="text-align:center;">
+				<span  class="Weight_lbs"><input type="number" id="WBBaggage2_lbs" /></span>
+				<span  class="Weight_kg"><input type="number" id="WBBaggage2_kg" /></span></td>
+			<td style="text-align:left;">
+				<span class="Weight_lbs">lbs.&nbsp;(&le;50)</span>
+				<span class="Weight_kg">kg.&nbsp;(&le;23)</span></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+
+	<div id="WBOutput">
+	<table class="borderHeader">
+		<td>Results</td>
+		<td><button type="button" class="inputButton" onclick="mailWB()">Email</button></td>
+	</table>
+	<div class="border">
+	<table class="oTable">
+		<tr>
+			<td class="canvasCell" colspan="2" style="text-align:center;">
+				<canvas id="WBCanvas" width="280" height="280" style="border-style:solid"></canvas></td>
+		</tr><tr>
+			<td>Takeoff weight:</td>
+			<td>
+				<span class="Weight_lbs">
+					<span id="WBTOWeight_lbs"> </span>&thinsp;lbs.</span>
+				<span class="Weight_kg">
+					<span id="WBTOWeight_kg"> </span>&thinsp;kg.</span>
+				&emsp;<span id="WBTOWeightError"></span></td>
+		</tr><tr>
+			<td>Takeoff CG:</td>
+			<td>
+				<span id="WBTOCG"> </span>&thinsp;in.
+				&emsp;<span id="WBTOCGError"></span></td>
+		</tr><tr>
+			<td>Takeoff category:</td>
+			<td>
+				<span id="WBTOCategory"> </span>
+				&emsp;<span id="WBTOCategoryError"></span></td>
+		</tr><tr>
+			<td>Landing weight:</td>
+			<td>
+				<span class="Weight_lbs">
+					<span id="WBLdgWeight_lbs"> </span>&thinsp;lbs.</span>
+				<span class="Weight_kg">
+					<span id="WBLdgWeight_kg"> </span>&thinsp;kg.</span>
+				&emsp;<span id="WBLdgWeightError"></span></td>
+		</tr><tr>
+			<td>Landing CG:</td>
+			<td>
+				<span id="WBLdgCG"> </span>&thinsp;in.
+				&emsp;<span id="WBLdgCGError"></span></td>
+		</tr><tr>
+			<td>Landing category:</td>
+			<td>
+				<span id="WBLdgCategory"> </span>
+				&emsp;<span id="WBLdgCategoryError"></span></td>
+		</tr><tr>
+			<td>Max fuel load:</td>
+			<td>
+				<span class="Fuel_gal">
+					<span id="WBMaxFuel_gal"> </span>&thinsp;gal.</span>
+				<span class="Fuel_l">
+					<span id="WBMaxFuel_l"> </span>&thinsp;l.</span>
+				&emsp;<span id="WBMaxFuelError"> </span></td>
+		</tr><tr>
+			<td>Zero fuel weight:</td>
+			<td>
+				<span class="Weight_lbs">
+					<span id="WBZFWeight_lbs"> </span>&thinsp;lbs.</span>
+				<span class="Weight_kg">
+					<span id="WBZFWeight_kg"> </span>&thinsp;kg.</span>
+				&emsp;<span id="WBZFWeightError"> </span></td>
+		</tr><tr>
+			<td>Zero fuel CG:</td>
+			<td>
+				<span id="WBZFCG"> </span>&thinsp;in.
+				&emsp;<span id="WBZFCGError"></span></td>
+		</tr><tr>
+			<td>Ramp weight:</td>
+			<td>
+				<span class="Weight_lbs">
+					<span id="WBRampWeight_lbs"> </span>&thinsp;lbs.</span>
+				<span class="Weight_kg">
+					<span id="WBRampWeight_kg"> </span>&thinsp;kg.</span>
+				&emsp;<span id="WBRampWeightError"> </span></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+</div>
+
+<div id="DepPage" class="page">
+	<div id="DepInput">
+	<table class="borderHeader">
+		<td>Settings&emsp;<span class="pageInputHeading"></span></td>
+		<td><button type="button" class="inputButton" onclick="showHelp('HelpDepDest')">Help</button></td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Airport:</td>
+			<td><input type="text" id="DepArpt" /></td>
+		</tr><tr id="DepMetarTextRow">
+			<td>METAR:</td>
+			<td><table class="Metar"><tr>
+				<td id="DepMetarText"></td>
+				<td><button onclick="getMetar('Dep')"><img id="DepSync" src="common/img/sync.png"></button></td>
+				</tr></table></td>
+		</tr><tr class="errRow">
+			<td></td>
+			<td id="DepMetarError"></td>
+		</tr><tr>
+			<td>METAR age:</td>
+			<td id="DepMetarAge"></td>
+		</tr><tr>
+			<td>Runways:</td>
+			<td id="DepRunwaysText"></td>
+		</tr><tr>
+			<td>Magnetic variation:</td>
+			<td id="DepMagVar"></td>
+		</tr><tr>
+			<td>Altitude:</td>
+			<td><input type="number" id="DepAlt" /> ft.</td>
+		</tr><tr>
+			<td>Wind:</td>
+			<td>
+				<input type="text" id="DepWindDir" /> &deg; @
+				<input type="text" id="DepWind" /> kt.</td>
+		</tr><tr>
+			<td>OAT:</td>
+			<td>
+				<input type="number" id="DepOAT" />&thinsp;&deg;C&nbsp;
+					(<span id="DepTempF">-</span>&thinsp;&deg;F,&nbsp;
+					<span id="DepTempISA">-</span>&thinsp;&deg;ISA)</td>
+		</tr><tr>
+			<td>Altimeter:</td>
+			<td>
+				<span class="Altimeter_inhg"><input type="number" step="0.01" id="DepAltimeter_inhg" /> in.</span>
+				<span class="Altimeter_hpa"><input type="number" id="DepAltimeter_hpa" /> hPa.</span></td>
+		</tr><tr>
+			<td>Runway:</td>
+			<td>
+				<select id="DepRwy">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+				</select>&emsp;
+		</tr><tr>
+			<td>Best Runway:</td>
+			<td><span id="DepBestRwy">-</span></td>
+		</tr><tr>
+			<td>Runway condition:</td>
+			<td>
+				<select id="DepRwyCond">
+					<option value="hard">Hard, dry</option>
+					<option value="dry grass">Dry grass</option>
+				</select></td>
+		</tr><tr>
+			<td>Runway length:</td>
+			<td>
+				<span class="Runway_ft">
+					<input type="number" id="DepRwyLength_ft" /> ft.</span>
+				<span class="Runway_m">
+					<input type="number" id="DepRwyLength_m" /> m.</span></td>
+		</tr><tr>
+			<td>Runway slope:</td>
+			<td>
+				<input type="number" id="DepSlope" /> %</td>
+		</tr>
+	</table>
+	</div>
+	</div>
+
+	<div id="DepOutput">
+	<table class="borderHeader">
+		<td>Results</td>
+	</table>
+	<div class="border">
+	<table class="oTable">
+		<tr>
+			<td class="canvasCell" colspan="4" style="text-align:center;">
+				<canvas id="DepCanvas" width="280" height="210" style="border-style:solid"></canvas></td>
+		</tr><tr>
+			<td>Headwind:</td>
+			<td colspan="3"><span id="DepHeadwind"></span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Crosswind:</td>
+			<td colspan="3">
+				<span id="DepCrosswind"> </span>&thinsp;kt.
+				<span id="DepCrosswindDir"> </span></td>
+		</tr><tr>
+			<td>Takeoff roll:</td>
+			<td>
+				<span class="Runway_ft">
+					<span id="DepRoll_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m">
+					<span id="DepRoll_m">-</span>&thinsp;m.</span></td>
+			<td>V<sub>rshort</sub>:</td>
+			<td><span id="DepVr">-</span>&thinsp;kt.</td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="DepRollVrError"> </span></td>
+		</tr><tr>
+			<td>50' obstacle clearance:</td>
+			<td colspan="3">
+				<span class="Runway_ft">
+					<span id="DepObstacle_ft"> -</span>&thinsp;ft.</span>
+				<span  class="Runway_m">
+					<span id="DepObstacle_m"> -</span>&thinsp;m.</span>
+				</td>
+		</tr><tr class="errRow">
+			<td></td>
+			<td colspan="3" class="warn">
+				Check for obstacles within
+				<span class="Runway_ft">
+					<span id="DepObstacleDist_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m">
+					<span id="DepObstacleDist_m">-</span>&thinsp;m.</span>
+				of DER.
+				Unsafe for LIFR.
+			</td>
+		</tr><tr>
+			<td>Safe runway:</td>
+			<td>
+				<span class="Runway_ft"><span id="DepSafeRunway_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DepSafeRunway_m">-</span>&thinsp;m.</span></td>
+			<td>Obs.:</td>
+			<td>
+				<span class="Runway_ft"><span id="DepSafeObstacle_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DepSafeObstacle_m">-</span>&thinsp;m.</span></td>
+		</tr><tr>
+			<td>Runway remaining:</td>
+			<td colspan="3">
+				<span class="Runway_ft">
+					<span id="DepRunwayLeft_ft"> -</span>&thinsp;ft.</span>
+				<span class="Runway_m">
+					<span id="DepRunwayLeft_m"> -</span>&thinsp;m.</span></td>
+		</tr><tr>
+			<td>V<sub>x</sub>:</td>
+			<td><span id="DepVx">-</span>&thinsp;kt.</td>
+			<td>V<sub>y</sub>:</td>
+			<td><span id="DepVy">-</span>&thinsp;kt.</td>
+		</tr><tr class="errRow">
+			<td></td>
+			<td colspan="3"><span id="DepVxVyError"> </span></td>
+		</tr><tr>
+			<td>Stall IAS, 10&deg; flaps:</td>
+			<td><span id="DepVs10">-</span>&thinsp;kt.</td>
+			<td>1.3V<sub>s</sub>:</td>
+			<td><span id="Dep13Vs10">-</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Stall IAS, clean:</td>
+			<td><span id="DepVs">-</span>&thinsp;kt.</td>
+			<td>1.3V<sub>s</sub>:</td>
+			<td><span id="Dep13Vs">-</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Maneuvering IAS (V<sub>a</sub>):</td>
+			<td colspan="3"><span id="DepVa">-</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Density altitude:</td>
+			<td colspan="3"><span id="DepDA">-</span>&thinsp;ft.</td>
+		</tr><tr>
+			<td>Upslope T/O min. headwind:</td>
+			<td colspan="3"><span id="DepBEWind">-</span>&thinsp;kt. (10kt. max)</td>
+		</tr><tr>
+			<td>Est. accel-stop:</td>
+			<td colspan="3">
+				<span class="Runway_ft"><span id="DepAcStop_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DepAcStop_m">-</span>&thinsp;m.</span></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+</div>
+
+<div id="EnrtPage" class="page">
+	<div id="EnrtInput">
+	<table class="borderHeader">
+		<td>Settings&emsp;<span class="pageInputHeading"></span></td>
+		<td><button type="button" class="inputButton" onclick="showHelp('HelpEnrt')">Help</button></td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Cruise altitude:</td>
+			<td><input type="number" id="EnrtAltH" />&thinsp;00&thinsp;ft</td>
+		</tr><tr>
+			<td>Temperature:</td>
+			<td>
+				<span><input type="number" id="EnrtOAT" />&deg;C</span>
+				<span><input type="number" id="EnrtISA" />&deg;C</span>
+				&thinsp;
+				<select id="EnrtTempType">
+					<option value="OAT">OAT</option>
+					<option value="ISA">ISA</option>
+				</select></td>
+		</tr><tr>
+			<td>ISA:</td>
+			<td><span id="EnrtISA2"> -</span>&thinsp;&deg;C</td>
+		</tr><tr>
+			<td>Cruise power:</td>
+			<td>
+				<select id="EnrtPower">
+					<option value="Max">Maximum</option>
+					<option value="75">75%</option>
+					<option value="65">65%</option>
+					<option value="55">55%</option>
+					<option value="45">45%</option>
+					<option value="LR">Long range</option>
+				</select></td>
+		</tr><tr>
+			<td>Reserve:</td>
+			<td>
+				<select id="EnrtReserve">
+					<option value="VFR">VFR</option>
+					<option value="IFR0">IFR</option>
+					<option value="IFR50">IFR + 50&thinsp;nm.</option>
+					<option value="IFR100">IFR + 100&thinsp;nm.</option>
+				</select></td>
+		</tr><tr>
+			<td>Route distance:</td>
+			<td><input type="number" id="EnrtDist" /> nm.</td>
+		</tr><tr>
+			<td>Dest. distance:</td>
+			<td><span id="EnrtDestDist"> </span></td>
+		</tr><tr>
+			<td>Avg. wind:</td>
+			<td>
+				<input type="number" id="EnrtWind" /> kt.
+				&nbsp;
+				<select id="EnrtWindDir">
+					<option value="tailwind">tailwind</option>
+					<option value="headwind">headwind</option>
+				</select></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+
+	<div id="EnrtOutput">
+	<table class="borderHeader">
+		<td>Results</td>
+	</table>
+	<div class="border">
+	<table class="oTable">
+		<tr>
+			<td>Cruise RPM:</td>
+			<td colspan="3"><span id="EnrtRPM"> -</span>&thinsp;RPM</td>
+		</tr><tr>
+			<td>Range w/ alt. resv.:</td>
+			<td colspan="3"><span id="EnrtMaxRange">-</span>&thinsp;nm.</td>
+		</tr><tr>
+			<td>Fuel to&nbsp;dest.:</td>
+			<td>
+				<span class="Fuel_gal"><span id="EnrtFuelToDest_gal">-</span>&thinsp;gal.</span>
+				<span class="Fuel_l"><span id="EnrtFuelToDest_l">-</span>&thinsp;l.</span></td>
+			<td>ETE:</td>
+			<td><span id="EnrtETE"> -</span>&nbsp;h:m</td>
+		</tr><tr>
+			<td>Fuel @&nbsp;dest.:</td>
+			<td>
+				<span class="Fuel_gal"><span id="EnrtFuelAtDest_gal">-</span>&thinsp;gal.</span>
+				<span class="Fuel_l"><span id="EnrtFuelAtDest_l">-</span>&thinsp;l.</span></td>
+			<td>@&nbsp;alt.:</td>
+			<td>
+				<span class="Fuel_gal"><span id="EnrtFuelAtAlt_gal">-</span>&thinsp;gal.</span>
+				<span class="Fuel_l"><span id="EnrtFuelAtAlt_l">-</span>&thinsp;l.</span></td>
+		</tr><tr>
+			<td>Min. reserve at&nbsp;dest.:</td>
+			<td colspan="3">
+				<span class="Fuel_gal"><span id="EnrtAltResv_gal">-</span>&thinsp;gal.</span>
+				<span class="Fuel_l"><span id="EnrtAltResv_l">-</span>&thinsp;l.</span></td>
+		</tr><tr>
+			<td>Endurance w/ alt. resv.:</td>
+			<td colspan="3"><span id="EnrtEndurance">-</span>&nbsp;h:m</td>
+		</tr><tr>
+			<td>Cruise TAS:</td>
+			<td colspan="3"><span id="EnrtTAS">-</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Fuel on board:</td>
+			<td colspan="3"><span id="EnrtFOB"> -</span>&nbsp;h:m</td>
+		</tr><tr>
+			<td>Cruise fuel flow:</td>
+			<td colspan="3">
+				<span id="EnrtGPH"> -</span>&thinsp;gph.,&nbsp;
+				<span id="EnrtPPH"> -</span>&thinsp;pph.</td>
+		</tr><tr>
+			<td>Cruise efficiency:</td>
+			<td colspan="3"><span id="EnrtEff"> -</span>&thinsp;nmpg.</td>
+		</tr><tr>
+			<td>Fuel for climb:</td>
+			<td colspan="3">
+				<span class="Fuel_gal"><span id="EnrtClimbFuel_gal">-</span>&thinsp;gal.</span>
+				<span class="Fuel_l"><span id="EnrtClimbFuel_l">-</span>&thinsp;l.</span></td>
+		</tr><tr>
+			<td>Distance for climb:</td>
+			<td><span id="EnrtClimbDist">-</span>&thinsp;nm.</td>
+			<td>Time:</td>
+			<td><span id="EnrtClimbTime">-</span>&thinsp;min.</td>
+		</tr><tr class="errRow"><td></td><td colspan="3"><span id="EnrtClimbDTError"> </span></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+</div>
+
+<div id="DestPage" class="page">
+	<div id="DestInput">
+	<table class="borderHeader">
+		<td>Settings&emsp;<span class="pageInputHeading"></span></td>
+		<td><button type="button" class="inputButton" onclick="showHelp('HelpDepDest')">Help</button></td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Airport:</td>
+			<td><input type="text" id="DestArpt" /></td>
+		</tr><tr id="DestMetarTextRow">
+			<td>METAR:</td>
+			<td><table class="Metar"><tr>
+				<td id="DestMetarText"></td>
+				<td><button onclick="getMetar('Dest')"><img id="DestSync" src="common/img/sync.png"></button></td>
+				</tr></table></td>
+		</tr><tr class="errRow">
+			<td></td>
+			<td id="DestMetarError"></td>
+		</tr><tr>
+			<td>METAR age:</td>
+			<td id="DestMetarAge"></td>
+		</tr><tr>
+			<td>Runways:</td>
+			<td id="DestRunwaysText"></td>
+		</tr><tr>
+			<td>Magnetic variation:</td>
+			<td id="DestMagVar"></td>
+		</tr><tr>
+			<td>Altitude:</td>
+			<td><input type="number" id="DestAlt" /> ft.</td>
+		</tr><tr>
+			<td>Wind:</td>
+			<td>
+				<input type="text" id="DestWindDir" /> &deg; @
+				<input type="text" id="DestWind" /> kt.</td>
+		</tr><tr>
+			<td>OAT:</td>
+			<td><input type="number" id="DestOAT" />&thinsp;&deg;C&nbsp;
+				(<span id="DestTempF">-</span>&thinsp;&deg;F,&nbsp;
+				<span id="DestTempISA">-</span>&thinsp;&deg;ISA)</td>
+		</tr><tr>
+			<td>Altimeter:</td>
+			<td>
+				<span class="Altimeter_inhg"><input type="number" step="0.01" id="DestAltimeter_inhg" /> in.</span>
+				<span class="Altimeter_hpa"><input type="number" id="DestAltimeter_hpa" /> hPa.</span></td>
+		</tr><tr>
+			<td>Runway:</td>
+			<td><select id="DestRwy">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+				<option value="11">11</option>
+				<option value="12">12</option>
+				<option value="13">13</option>
+				<option value="14">14</option>
+				<option value="15">15</option>
+				<option value="16">16</option>
+				<option value="17">17</option>
+				<option value="18">18</option>
+				<option value="19">19</option>
+				<option value="20">20</option>
+				<option value="21">21</option>
+				<option value="22">22</option>
+				<option value="23">23</option>
+				<option value="24">24</option>
+				<option value="25">25</option>
+				<option value="26">26</option>
+				<option value="27">27</option>
+				<option value="28">28</option>
+				<option value="29">29</option>
+				<option value="30">30</option>
+				<option value="31">31</option>
+				<option value="32">32</option>
+				<option value="33">33</option>
+				<option value="34">34</option>
+				<option value="35">35</option>
+				<option value="36">36</option>
+			</select>&emsp;</td>
+		</tr><tr>
+			<td>Best Runway:</td>
+			<td><span id="DestBestRwy">-</span></td>
+		</tr><tr>
+			<td>Runway condition:</td>
+			<td>
+				<select id="DestRwyCond">
+					<option value="hard">Hard, dry</option>
+					<option value="dry grass">Dry grass</option>
+				</select></td>
+		</tr><tr>
+			<td>Runway length:</td>
+			<td>
+				<span class="Runway_ft">
+					<input type="number" id="DestRwyLength_ft" /> ft.</span>
+				<span class="Runway_m">
+					<input type="number" id="DestRwyLength_m" /> m.</span></td>
+		</tr><tr>
+			<td>Flaps:</td>
+			<td>
+				<select id="DestFlaps">
+					<option value="30">30&deg;</option>
+					<option value="0">None</option>
+				</select></td>
+		</tr>
+	</table>
+	</div>
+	</div>
+
+	<div id="DestOutput">
+	<table class="borderHeader">
+		<td>Results</td>
+	</table>
+	<div class="border">
+	<table class="oTable">
+		<tr>
+			<td class="canvasCell" colspan="4" style="text-align:center;">
+				<canvas id="DestCanvas" width="280" height="210" style="border-style:solid"></canvas></td>
+		</tr><tr>
+			<td>Headwind:</td>
+			<td colspan="3"><span id="DestHeadwind"></span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Crosswind:</td>
+			<td colspan="3">
+				<span id="DestCrosswind"></span>&thinsp;kt.
+				<span id="DestCrosswindDir"></span></td>
+		</tr><tr>
+			<td>Landing roll:</td>
+			<td colspan="3">
+				<span class="Runway_ft"><span id="DestRoll_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DestRoll_m">-</span>&thinsp;m.</span></td>
+		</tr><tr>
+			<td>50' obstacle clearance:</td>
+			<td colspan="3">
+				<span class="Runway_ft"><span id="DestObstacle_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DestObstacle_m">-</span>&thinsp;m.</span></td>
+		</tr><tr class="errRow">
+			<td></td>
+			<td colspan="3" class="warn">
+				Check for obstacles within
+				<span class="Runway_ft">
+					<span id="DestObstacleDist_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m">
+					<span id="DestObstacleDist_m">-</span>&thinsp;m.</span>
+				of threshold.
+				Unsafe for LIFR.
+			</td>
+		</tr><tr>
+			<td>Safe runway:</td>
+			<td>
+				<span class="Runway_ft"><span id="DestSafeRunway_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DestSafeRunway_m">-</span>&thinsp;m.</span></td>
+			<td>Obs.:</td>
+			<td>
+				<span class="Runway_ft"><span id="DestSafeObstacle_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DestSafeObstacle_m">-</span>&thinsp;m.</span></td>
+		</tr><tr>
+			<td>Runway remaining:</td>
+			<td colspan="3">
+				<span class="Runway_ft"><span id="DestRunwayLeft_ft">-</span>&thinsp;ft.</span>
+				<span class="Runway_m"><span id="DestRunwayLeft_m">-</span>&thinsp;m.</span></td>
+		</tr><tr>
+			<td>Stall IAS, 30&deg;&nbsp;flaps:</td>
+			<td><span id="DestVs30"> -</span>&thinsp;kt.</td>
+			<td>1.3V<sub>s</sub>:</td>
+			<td><span id="Dest13Vs30"> -</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Stall IAS, 10&deg;&nbsp;flaps:</td>
+			<td><span id="DestVs10"> -</span>&thinsp;kt.</td>
+			<td>1.3V<sub>s</sub>:</td>
+			<td><span id="Dest13Vs10"> -</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Stall IAS, no flaps:</td>
+			<td><span id="DestVs"> -</span>&thinsp;kt.</td>
+			<td>1.3V<sub>s</sub>:</td>
+			<td><span id="Dest13Vs"> -</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>Maneuvering IAS (V<sub>a</sub>):</td>
+			<td colspan="3"><span id="DestVa"> -</span>&thinsp;kt.</td>
+		</tr><tr>
+			<td>GA climb rate:</td>
+			<td colspan="3">
+				<span id="DestROC"> -</span>&thinsp;fpm.
+				@ <span id="DestVy">-</span>kt.</td>
+		</tr><tr>
+			<td>Density altitude:</td>
+			<td colspan="3"><span id="DestDA">-</span>&thinsp;ft.</td>
+		</tr>
+	</table>
+	</div>
+	</div>
+</div>
+
+<div id="InstrPage" class="page">
+	<div id="InstrIndex">
+		<!-- transformed by setupIndex() -->
+	</div>
+
+	<div id="DPPage" class="mpage">
+		<div id="DPInput">
+		<table class="borderHeader">
+			<td>Departure Procedure&emsp;<span class="pageInputHeading"></span></td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpDP')">Help</button></td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>DP climb altitude (MEA):</td>
+				<td>
+					<input type="number" id="DPMEAH" />&thinsp;00&thinsp;ft.</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+
+		<div id="DPOutput">
+		<table class="borderHeader">
+			<td>Results</td>
+		</table>
+		<div class="border">
+		<table class="oTable">
+			<tr>
+				<td>DP&nbsp;T/O rate&nbsp;of&nbsp;climb:</td>
+				<td>
+					<span id="DPTOROC">-</span>&thinsp;fpm.
+					@ <span id="DPTOVy">-</span>kt.</td>
+			</tr><tr>
+				<td>DP&nbsp;T/O gradient, dep.&nbsp;wind:</td>
+				<td><span id="DPTOAOC">-</span>&thinsp;fpnm.</td>
+			</tr><tr>
+				<td>DP&nbsp;MEA rate&nbsp;of&nbsp;climb:</td>
+				<td><span id="DPROC">-</span>&thinsp;fpm. @ <span id="DPVy">-</span>kt.</td>
+			</tr><tr>
+				<td>DP&nbsp;MEA gradient, no&nbsp;wind:</td>
+				<td><span id="DPAOC">-</span>&thinsp;fpnm.</td>
+			</tr><tr>
+				<td>DP&nbsp;MEA gradient, dep. tailwind:</td>
+				<td><span id="DPAOCT">-</span>&thinsp;fpnm. (<span id="DPAOCWind"></span>kt.)</td>
+			</tr>
+		</table>
+		</div>
+		<div id="DPCold">
+			<table class="borderHeader">
+				<td>Cold Weather Altitude Adjustment</td>
+			</table>
+			<div class="border">
+			<table class="coldTable">
+				<thead>
+				<tr>
+					<th>Fix</th>
+					<th>Altitude</th>
+					<th>Adjusted Altitude</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr>
+					<td>Initial</td>
+					<td><input type="number" id="DPCold1" />&thinsp;ft.</td>
+					<td><span id="DPColdAdj1"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td></td>
+					<td><input type="number" id="DPCold2" />&thinsp;ft.</td>
+					<td><span id="DPColdAdj2"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td></td>
+					<td><input type="number" id="DPCold3" />&thinsp;ft.</td>
+					<td><span id="DPColdAdj3"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td>MEA</td>
+					<td><input type="number" id="DPCold4" />&thinsp;ft.</td>
+					<td><span id="DPColdAdj4"></span>&thinsp;ft.</td>
+				</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+		</div>
+	</div>
+
+	<div id="APPage" class="mpage">
+		<div id="APInput">
+		<table class="borderHeader">
+			<td>Approach Procedure&emsp;<span class="pageInputHeading"></span></td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpAP')">Help</button></td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>Minimum Descent Height (MDH):</td>
+				<td>
+					<input type="number" id="APMDH" /> ft.</td>
+			</tr><tr>
+				<td>Missed apch. hold altitude:</td>
+				<td>
+					<input type="number" id="APMAHoldAltH" />&thinsp;00&thinsp;ft</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+
+		<div id="APOutput">
+		<table class="borderHeader">
+			<td>Results</td>
+		</table>
+		<div class="border">
+		<table class="oTable">
+			<tr>
+				<td>VDP to threshold:</td>
+				<td><span id="APVDP">-</span>&thinsp;nm.</td>
+			</tr><tr>
+				<td>Min. VDP to threshold:</td>
+				<td><span id="APMinVDP">-</span>&thinsp;nm.</td>
+			</tr><tr>
+				<td>Min. VDP conditions:</td>
+				<td><span id="APMinVDPInfo"></span></td>
+			</tr><tr>
+				<td>MA rate&nbsp;of&nbsp;climb:</td>
+				<td><span id="APMAROC">-</span>&thinsp;fpm.
+					@<span id="APMAVy">-</span>kt.</td>
+			</tr><tr>
+				<td>MA&nbsp;gradient, no&nbsp;wind:</td>
+				<td><span id="APMAAOC">-</span>&thinsp;fpnm.</td>
+			</tr><tr>
+				<td>MA&nbsp;gradient, tailwind:</td>
+				<td><span id="APMAAOCT">-</span>&thinsp;fpnm. (<span id="APAOCWind"></span>kt.)</td>
+			</tr>
+		</table>
+		</div>
+		<div id="APCold">
+			<table class="borderHeader">
+				<td>Cold Weather Altitude Adjustment</td>
+			</table>
+			<div class="border">
+			<table class="coldTable">
+				<thead>
+				<tr>
+					<th>Fix</th>
+					<th>Altitude</th>
+					<th>Adjusted Altitude</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr>
+					<td>IAF</td>
+					<td><input type="number" id="APCold1" />&thinsp;ft.</td>
+					<td><span id="APColdAdj1"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td></td>
+					<td><input type="number" id="APCold2" />&thinsp;ft.</td>
+					<td><span id="APColdAdj2"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td></td>
+					<td><input type="number" id="APCold3" />&thinsp;ft.</td>
+					<td><span id="APColdAdj3"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td>MDA/DA</td>
+					<td><input type="number" id="APCold4" />&thinsp;ft.</td>
+					<td><span id="APColdAdj4"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td></td>
+					<td><input type="number" id="APCold5" />&thinsp;ft.</td>
+					<td><span id="APColdAdj5"></span>&thinsp;ft.</td>
+				</tr><tr>
+					<td>MA Hold</td>
+					<td><input type="number" id="APCold6" />&thinsp;ft.</td>
+					<td><span id="APColdAdj6"></span>&thinsp;ft.</td>
+				</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+		</div>
+	</div>
+
+	<div id="HoldPage" class="mpage">
+		<div id="HoldOutput">
+		<table class="borderHeader">
+			<td>Hold Procedure</td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpHold')">Help</button></td>
+		</table>
+		<div class="border">
+		<table class="oTable">
+			<tr>
+				<td>Left turns:</td>
+				<td><input type="checkbox" id="HoldLeftTurns" /></td>
+			</tr><tr>
+				<td class="canvasCell" colspan="2"  style="text-align:center;">
+					<canvas id="HoldCanvas"></canvas></td>
+			</tr><tr>
+				<td>Entry:</td>
+				<td><span id="HoldEntry">-</span></td>
+			</tr><tr>
+				<td>After fix:</td>
+				<td><span id="HoldInitial">-</span></td>
+			</tr><tr>
+				<td>Heading to fix:</td>
+				<td><input type="number" id="HoldHeading" />&deg;</td>
+			</tr><tr>
+				<td>Radial outbound:</td>
+				<td><input type="number" id="HoldRadial" />&deg;</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+	</div>
+</div>
+
+<div id="EmergPage" class="page">
+	<div id="EmergInput">
+	<table class="borderHeader">
+		<td>Settings&emsp;<span class="pageInputHeading"></span></td>
+		<td><button type="button" class="inputButton" onclick="showHelp('HelpEmerg')">Help</button></td>
+	</table>
+	<div class="border">
+	<table class="iTable">
+		<tr>
+			<td>Target landing altitude:</td>
+			<td>
+				<select id="EmergLdgAlt">
+					<option value="0">0,000</option>
+					<option value="1000">1,000</option>
+					<option value="2000">2,000</option>
+					<option value="3000">3,000</option>
+					<option value="4000">4,000</option>
+					<option value="5000">5,000</option>
+					<option value="6000">6,000</option>
+					<option value="7000">7,000</option>
+					<option value="8000">8,000</option>
+				</select> ft.
+				<span id="EmergLdgAltError"> </span></td>
+		</tr><tr>
+			<td>ISA offset:</td>
+			<td>
+				<select id="EmergISA">
+					<option value="-30">-30</option>
+					<option value="-20">-20</option>
+					<option value="-10">-10</option>
+					<option value="0"  >0</option>
+					<option value="10" >+10</option>
+					<option value="20" >+20</option>
+					<option value="30" >+30</option>
+				</select> &deg;C</td>
+		</tr>
+	</table>
+	</div>
+	</div>
+
+	<div id="EmergOutput">
+	<table class="borderHeader">
+		<td>Glide Distance @ 68KIAS</td>
+	</table>
+	<div class="border">
+		<div id="EmergGlideTable">
+			<table><tr><td><span id="EmergGlideDist"></span></td></tr></table>
+		</div>
+	</div>
+	</div>
+</div>
+
+<div id="MorePage" class="page">
+	<div id="MoreIndex">
+		<!-- transformed by setupIndex() -->
+	</div>
+
+	<div id="SetPage" class="mpage">
+		<div id="SetInput">
+		<table class="borderHeader">
+			<td>General Settings</td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpSettings')">Help</button></td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>Email address:</td>
+				<td><input type="email" id="SetEmail" /></td>
+			</tr><tr>
+				<td>Cloud sync ID:</td>
+				<td><input type="text" id="SetSaveID" /></td>
+			</tr><tr>
+				<td>Cloud sync status:</td>
+				<td><span id="SetCloudStatus">Disabled</span></td>
+			</tr><tr>
+				<td>Takeoff rwy. safety factor:</td>
+				<td><input type="number" id="SetTOSafety" />&thinsp;%</td>
+			</tr><tr>
+				<td>Landing rwy. safety factor:</td>
+				<td><input type="number" id="SetLdgSafety" />&thinsp;%</td>
+			</tr><tr>
+				<td>Start at Emergency page:</td>
+				<td><input type="checkbox" id="SetEmerg" /></td>
+			</tr><tr>
+				<td>Altimeter units:</td>
+				<td>
+					<select id="SetAltimeterUnits">
+						<option value="inhg">Inches of Mercury</option>
+						<option value="hpa">Hectopascals (Millibars)</option>
+					</select></td>
+			</tr><tr>
+				<td>Runway units:</td>
+				<td>
+					<select id="SetRunwayUnits">
+						<option value="ft">Feet</option>
+						<option value="m">Meters</option>
+					</select></td>
+			</tr><tr>
+				<td>Fuel units:</td>
+				<td>
+					<select id="SetFuelUnits">
+						<option value="gal">Gallons</option>
+						<option value="l">Liters</option>
+					</select></td>
+			</tr><tr>
+				<td>Weight units:</td>
+				<td>
+					<select id="SetWeightUnits">
+						<option value="lbs">Pounds</option>
+						<option value="kg">Kilograms</option>
+					</select></td>
+			</tr><tr>
+				<td>Numeric input:</td>
+				<td>
+					<select id="SetNumInputStyle">
+						<option value="standard">Standard</option>
+						<option value="vSlider">Vernier slider</option>
+						<option value="tPicker">Thumbwheels</option>
+						<option value="keypad">Numeric Keypad</option>
+					</select></td>
+			</tr><tr>
+				<td>Reset all input to defaults:</td>
+				<td>
+					<button type="button" onclick="resetSavedInput(true)">Reset all</button></td>
+			</tr>
+		</table>
+		</div>
+		</div>
+	</div>
+
+	<div id="ACPage" class="mpage">
+		<div id="ACInput">
+		<table class="borderHeader">
+			<td>Aircraft Settings</td>
+			<td><button id="ACEditButton" class="inputButton" type="button" onclick="editAircraft()">Edit</button></td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpAC')">Help</button></td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>Aircraft:</td>
+				<td>
+					<select id="SelectedAC">
+						<option value="[NONE]">[NONE]</option>
+					</select></td>
+			</tr><tr id="editACButtons">
+				<td></td>
+				<td>
+					&emsp; <button id="addACButton" type="button" onclick="newAircraft()">New</button>
+					&emsp; <button id="delACButton" type="button" onclick="deleteAircraft()">Delete</button></td>
+			</tr>
+		</table>
+		</div>
+
+		<table class="borderHeader">
+			<td>Aircraft</td>
+		</table>
+		<div class="border">
+		<table class="iTable">
+			<tr>
+				<td>Registration:</td>
+				<td><input type="text" id="ACReg" value="N" /></td>
+			</tr><tr>
+				<td>Model:</td>
+				<td>
+					<select id="ACModel">
+						<option value="172S">172S</option>
+						<option value="172N">172N</option>
+					</select></td>
+			</tr><tr>
+				<td>Basic empty weight:</td>
+				<td>
+					<span class="Weight_lbs"><input type="number" step="0.1" id="ACBEW_lbs" />&thinsp;lbs.</span>
+					<span class="Weight_kg"><input type="number" step="0.1" id="ACBEW_kg" />&thinsp;kg.</span></td>
+			</tr><tr>
+				<td>Empty weight arm:</td>
+				<td>
+					<input type="number" step="0.01" id="ACArm" />&thinsp;in.</td>
+			</tr><tr>
+				<td>Long range tanks:</td>
+				<td>
+					<input type="checkbox" id="ACLRTanks" /></td>
+			</tr>
+		</table>
+		</div>
+		</div>
+	</div>
+
+	<div id="RiskPage" class="mpage">
+		<div id="RiskOutput">
+			<table class="borderHeader">
+				<td>Results</td>
+				<td><button type="button" class="inputButton" onclick="showHelp('HelpRisk')">Help</button></td>
+			</table>
+			<div class="border">
+				<table class="oTable">
+					<tr>
+						<td class="canvasCell" colspan="2" style="text-align:center;">
+							<canvas id="RiskMeterCanvas" width="250" height="100"></canvas>
+						</td>
+					</tr><tr>
+						<td colspan="2">
+							<div id="RiskLow">
+								<p>
+									Low Risk.
+									You are good to go.
+								</p>
+							</div>
+							<div id="RiskMed">
+								<p>
+									Moderate Risk.
+									Consider alternatives that might mitigate some risk items.
+								</p>
+							</div>
+							<div id="RiskHigh">
+								<p>
+									High Risk.
+									Have a serious alternative plan.
+									Consider consulting with a CFI or another pilot.
+								</p>
+							</div>
+							<div id="RiskNG">
+								<p>
+									Extreme Risk.
+									Wait for conditions to change.
+								</p>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div id="RiskInput">
+			<table class="borderHeader">
+				<td>Risk Assessment Settings: General Flight</td>
+				<td><button type="button" id="ClearRiskButton" class="inputButton" onclick="clearRisk()">Clear All</button></td>
+			</table>
+			<div class="border">
+				<table class="iTable">
+					<tr>
+						<td>Flight rules:</td>
+						<td><select id="RiskFlightRules">
+							<option value="RiskVFR">VFR</option>
+							<option value="RiskIFR">IFR</option>
+						</select></td>
+					</tr><tr>
+						<td>Convective SIGMET (red) penetration:</td>
+						<td><input type="checkbox" id="RiskSigmet" /></td>
+					</tr><tr>
+						<td>Thunderstorm penetration possible:</td>
+						<td><input type="checkbox" id="RiskTS" /></td>
+					</tr><tr>
+						<td>Possible &ge;30dbZ precipitation penetration:</td>
+						<td><input type="checkbox" id="RiskRedPrecip" /></td>
+					</tr><tr>
+						<td>Forecast moderate icing:</td>
+						<td><input type="checkbox" id="RiskFcstIce" /></td>
+					</tr><tr>
+						<td>Icing PIREP:</td>
+						<td><input type="checkbox" id="RiskIcePirep" /></td>
+					</tr><tr>
+						<td>Possible freezing rain:</td>
+						<td><input type="checkbox" id="RiskFzRain" /></td>
+					</tr><tr>
+						<td>Autopilot inoperable:</td>
+						<td><input type="checkbox" id="RiskAutoPilot" /></td>
+					</tr><tr>
+						<td>First flight after maintenance:</td>
+						<td><input type="checkbox" id="RiskMaint" /></td>
+					</tr>
+				</table>
+			</div>
+			<table class="borderHeader">
+				<td>Human Factors</td>
+			</table>
+			<div class="border">
+				<table class="iTable">
+					<tr>
+						<td>Not 15 day current:</td>
+						<td><input type="checkbox" id="RiskCur" /></td>
+					</tr><tr>
+						<td>Fatigue or inadequate rest:</td>
+						<td><input type="checkbox" id="RiskRest" /></td>
+					</tr><tr>
+						<td>After workday:</td>
+						<td><input type="checkbox" id="RiskAfterWork" /></td>
+					</tr><tr>
+						<td>Second flight of the day:</td>
+						<td><input type="checkbox" id="Risk2ndFlight" /></td>
+					</tr><tr>
+						<td>More than 3 landings in the day:</td>
+						<td><input type="checkbox" id="Risk3Landings" /></td>
+					</tr><tr>
+						<td>Illness, cold, or flu:</td>
+						<td><input type="checkbox" id="RiskIllness" /></td>
+					</tr><tr>
+						<td>Personal or relationship issues:</td>
+						<td><input type="checkbox" id="RiskPersonal" /></td>
+					</tr><tr>
+						<td>Business issues:</td>
+						<td><input type="checkbox" id="RiskBusiness" /></td>
+					</tr>
+				</table>
+			</div>
+			<table class="borderHeader">
+				<td>Departure Area</td>
+			</table>
+			<div class="border">
+				<table class="iTable">
+					<tr>
+						<td>Runway condition:</td>
+						<td><select id="RiskDepRwyCond">
+							<option value="RiskDepRwyDry">Dry</option>
+							<option value="RiskDepRwyWet">Wet</option>
+							<option value="RiskDepRwyIce">Snow or ice</option>
+							<option value="RiskDepRwyWater">Standing water</option>
+							<option value="RiskDepRwySoft">Soft field</option>
+						</select></td>
+					</tr><tr>
+						<td>Max. takeoff weight:</td>
+						<td><input type="checkbox" id="RiskDepMTOW" /></td>
+					</tr><tr>
+						<td>Night:</td>
+						<td><input type="checkbox" id="RiskDepNight" /></td>
+					</tr><tr>
+						<td>Steep terrain nearby:</td>
+						<td><input type="checkbox" id="RiskDepTerrain" /></td>
+					</tr><tr>
+						<td>Precipitation:</td>
+						<td><input type="checkbox" id="RiskDepPrecip" /></td>
+					</tr><tr>
+						<td>IMC:</td>
+						<td><input type="checkbox" id="RiskDepIMC" /></td>
+					</tr><tr>
+						<td>Ceiling &lt;200' of mins.:</td>
+						<td><input type="checkbox" id="RiskDepCeiling" /></td>
+					</tr><tr>
+						<td>Possible icing in area:</td>
+						<td><input type="checkbox" id="RiskDepIcing" /></td>
+					</tr><tr>
+						<td>Wind/gust &ge;20kt.:</td>
+						<td><input type="checkbox" id="RiskDepWind" /></td>
+					</tr><tr>
+						<td>Crosswind &ge;12kt.:</td>
+						<td><input type="checkbox" id="RiskDepXWind" /></td>
+					</tr><tr>
+						<td>No IFR ground clearance available:</td>
+						<td><input type="checkbox" id="RiskDepClearance" /></td>
+					</tr>
+				</table>
+			</div>
+
+			<table class="borderHeader">
+				<td>Enroute</td>
+			</table>
+			<div class="border">
+				<table class="iTable">
+					<tr>
+						<td>IMC at cruise altitude:</td>
+						<td><input type="checkbox" id="RiskCruiseIMC" /></td>
+					</tr><tr>
+						<td>Water crossing beyond glide:</td>
+						<td><input type="checkbox" id="RiskEnrtWater" /></td>
+					</tr><tr>
+						<td>Mountain range crossing beyond glide:</td>
+						<td><input type="checkbox" id="RiskEnrtMntn" /></td>
+					</tr><tr>
+						<td>Enroute IMC below freezing:</td>
+						<td><input type="checkbox" id="RiskCruiseIce" /></td>
+					</tr><tr>
+						<td>Night or ground-level IMC below:</td>
+						<td><input type="checkbox" id="RiskEnrtNight" /></td>
+					</tr><tr>
+						<td>Pass &lt;75nm of low pressure system:</td>
+						<td><input type="checkbox" id="RiskEnrtLow" /></td>
+					</tr>
+				</table>
+			</div>
+
+			<table class="borderHeader">
+				<td>Destination Area</td>
+			</table>
+			<div class="border">
+				<table class="iTable">
+					<tr>
+						<td>Runway condition:</td>
+						<td><select id="RiskDestRwyCond">
+							<option value="RiskDestRwyDry">Dry</option>
+							<option value="RiskDestRwyWet">Wet</option>
+							<option value="RiskDestRwyIce">Snow/ice</option>
+							<option value="RiskDestRwyWater">Standing water</option>
+							<option value="RiskDestRwySoft">Soft field</option>
+						</select></td>
+					</tr><tr>
+						<td>Approach:</td>
+						<td><select id="RiskDestApch">
+							<option value="RiskDestApchVis">Visual</option>
+							<option value="RiskDestApchNP">Non-precision</option>
+							<option value="RiskDestApchPrec">Precision</option>
+						</select></td>
+					</tr><tr>
+						<td>Runway &lt;3,500:</td>
+						<td><input type="checkbox" id="RiskDestShrtRwy" /></td>
+					</tr><tr>
+						<td>Steep terrain nearby:</td>
+						<td><input type="checkbox" id="RiskDestTerrain" /></td>
+					</tr><tr>
+						<td>Wind/gust &ge;20kt.:</td>
+						<td><input type="checkbox" id="RiskDestWind" /></td>
+					</tr><tr>
+						<td>Crosswind &ge;12kt, runway &lt;60' wide:</td>
+						<td><input type="checkbox" id="RiskDestXWind" /></td>
+					</tr><tr>
+						<td>Low-level windshear:</td>
+						<td><input type="checkbox" id="RiskDestLLWS" /></td>
+					</tr><tr>
+						<td>No visual glideslope:</td>
+						<td><input type="checkbox" id="RiskDestVasi" /></td>
+					</tr><tr>
+						<td>Night:</td>
+						<td><input type="checkbox" id="RiskDestNight" /></td>
+					</tr><tr>
+						<td>Temperature/&#8203;dewpoint spread &lt;3&deg;C:</td>
+						<td><input type="checkbox" id="RiskDestTDSpread" /></td>
+					</tr><tr>
+						<td>Precipitation:</td>
+						<td><input type="checkbox" id="RiskDestPrecip" /></td>
+					</tr><tr>
+						<td>IMC:</td>
+						<td><input type="checkbox" id="RiskDestIMC" /></td>
+					</tr><tr>
+						<td>Ceiling below FAF:</td>
+						<td><input type="checkbox" id="RiskDestCeilLtFAF" /></td>
+					</tr><tr>
+						<td>Ceiling &lt;200' of mins.:</td>
+						<td><input type="checkbox" id="RiskDestCeiling" /></td>
+					</tr><tr>
+						<td>Visibility &lt;2sm.:</td>
+						<td><input type="checkbox" id="RiskDestVis" /></td>
+					</tr><tr>
+						<td>Circle to land:</td>
+						<td><input type="checkbox" id="RiskDestCTL" /></td>
+					</tr><tr>
+						<td>Temperature &lt;0&deg;C:</td>
+						<td><input type="checkbox" id="RiskDestFrz" /></td>
+					</tr><tr>
+						<td>Possible ice or Pirep &lt;50nm.:</td>
+						<td><input type="checkbox" id="RiskDestIce" /></td>
+					</tr><tr>
+						<td>IMC penetration &gt;5,000':</td>
+						<td><input type="checkbox" id="RiskDestDeepIMC" /></td>
+					</tr><tr>
+						<td>No VFR within 200nm.:</td>
+						<td><input type="checkbox" id="RiskDestWideIMC" /></td>
+					</tr><tr>
+						<td>Low IFR within 100nm of destination:</td>
+						<td><input type="checkbox" id="RiskDestWideLIFR" /></td>
+					</tr><tr>
+						<td>Unfamiliar with airport:</td>
+						<td><input type="checkbox" id="RiskDestUnfam" /></td>
+					</tr><tr>
+						<td>No operating tower:</td>
+						<td><input type="checkbox" id="RiskDestNoTwr" /></td>
+					</tr><tr>
+						<td>No radar coverage:</td>
+						<td><input type="checkbox" id="RiskDestNoRadar" /></td>
+					</tr><tr>
+						<td>Less than 2hrs. fuel at landing:</td>
+						<td><input type="checkbox" id="RiskDestLowFuel" /></td>
+					</tr><tr>
+						<td>No operating FBO:</td>
+						<td><input type="checkbox" id="RiskDestNoFBO" /></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div id="TOUPage" class="mpage">
+		<table class="borderHeader">
+			<td>Terms of Use</td>
+			<td><button type="button" class="inputButton" onclick="showHelp('HelpTOU')">Help</button></td>
+		</table>
+		<div class="border">
+		<div class="text">
+		<p>
+		This set of applications, web pages, and web applications set forth below (the <q><u>Aviation Apps</u></q>),
+		contains software (the <q><u>Aviation Software</u></q>) that has <b>not been rigorously tested</b>.
+		</p><p>
+		Aviation Apps:
+		</p>
+		<ul>
+		<li>Beechcraft Baron POH Performance App</li>
+		<li>Beechcraft Bonanza POH Performance App</li>
+		<li>Cessna 172 POH Performance App</li>
+		<li>Daher-Socata TBM POH Performance App</li>
+		</ul>
+		<p>
+		By accessing, downloading and/or using any of the Aviation Apps, the Aviation Software, or any part of them
+		(either through this web address, another web address, the link to the Aviation Software below,
+		from any open source repository where the Aviation Apps or Aviation Software may be posted, or through any other means),
+		you agree to all the Terms of Use set forth herein.
+		You agree on behalf of yourself, your successors and assigns, to indemnify and hold harmless all authors of, contributors to,
+		and all distributors of the Aviation Apps and/or Aviation Software, including without limitation their respective affiliates and agents
+		(collectively, the <q><u>Indemnified Parties</u></q>), from any and all claims of damage, liability and/or Harm (as defined below).
+		Without limitation, you agree to pay or reimburse any and all losses, damages or costs incurred by the Indemnified Parties
+		that may arise from or relate to your use of the Aviation Apps and/or Aviation Software (or any part of any of them)
+		and you further agree to hold the Indemnified Parties harmless from any losses, damages or costs incurred by you, your successor, or assigns,
+		that may arise from or relate to your use of the Aviation Apps and/or Aviation Software.
+		</p><p>
+		You acknowledge and agree that your aircraft's Pilot's Operating Handbook (<q><u>POH</u></q>)
+		is the authoritative source of your aircraft's performance information.
+		Any information provided by the Aviation Apps and/or Aviation Software is advisory only
+		and you acknowledge and agree that you will confirm and verify all results obtained by using either of them against your aircraft's POH
+		before operating your aircraft in reliance on or in accordance with any such results.
+		The algorithms and settings in the Aviation Software are approximations of POH values.
+		Parameters and algorithms in the Aviation Apps and/or Aviation Software were derived from a POH which
+		may be different than the POH for your aircraft, and may not reflect the equipment installed on your aircraft.
+		In addition, you understand and agree that you must modify the default settings for the Aviation Software contained on the
+		<q>Aircraft</q> page of the applicable Aviation App so the settings correspond as much as possible to your aircraft.
+		You acknowledge and agree that you alone are responsible for verifying that all settings and algorithms used are appropriate for your aircraft.
+		</p><p>
+		You further acknowledge and agree that the operation of an aircraft involves inherent and unpredictable risks of accident, loss,
+		serious bodily injury including broken bones, burns, head injuries, trauma, pain, suffering and/or death, as well as harm or loss to property
+		including the aircraft itself and third party property (collectively, <q><u>Harm</u></q>).
+		You do hereby expressly release all Indemnified Parties from and assume all risk of Harm to yourself and to others
+		that may result from your use of the Aviation Apps and/or Aviation Software in connection with the operation of your aircraft.
+		</p><p>
+		You may freely modify or distribute the Aviation Software contained in the Aviation Apps provided that you retain Terms of Use
+		that provide equivalent or stronger indemnification of, and release from damage and liability protection for all authors,
+		contributors and distributors of this software or a modified version of it, and such Terms of Use must be acknowledged by every
+		user of any of the Aviation Apps and/or Aviation Software or any modified version of any of them.
+		</p><p>
+		The source code software for this Aviation App may be accessed <a href="https://sourceforge.net/projects/pohperformance/" target="_blank">here</a>.
+		If you download the source code, please send a note to <a href="mailto:info@pohperformance.com">info@pohperformance.com</a>.
+		</p><p>
+		<b>
+		THE AVIATION APPS AND AVIATION SOFTWARE ARE PROVIDED <q>AS IS</q>, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+		INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR USE, OR WITH RESPECT TO NONINFRINGEMENT.
+		IN NO EVENT SHALL THE AUTHORS, CREATORS, OR COPYRIGHT HOLDERS OF, OR CONTRIBUTORS TO THE AVIATION APPS OR AVIATION SOFTWARE BE LIABLE
+		FOR ANY CLAIM, DAMAGES, HARM OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+		WITH SUCH APPLICATION OR SOFTWARE OR THE USE THEREOF BY ANY PARTY OR ARISING FROM OTHER DEALINGS IN EITHER THE APPLICATION OR SOFTWARE.
+		</b>
+		</p><p>
+		By checking the box below, you affirm that the device on which you are running the Aviation Software is and will be used only by you.
+		This will prevent these Terms of Use from being displayed the next time you start this application.
+		</p>
+		<div style="width:100%">
+			<input type="checkbox" id="SingleUser"
+				style="display:block;margin-left:auto; margin-right:auto" />
+		</div>
+		<p>
+		By pressing the <q>I Accept</q> button below, you acknowledge that you accept these Terms of Use.
+		If you do not agree with these Terms of Use, you are not authorized to use any part of any of the Aviation Apps or Aviation Software
+		and the other tabs or pages that may be accessed from this page will not function unless these Terms of Use are accepted.
+		</p>
+		<div style="width:100%">
+			<button type="button" id="AcceptButton" onclick="acceptTOU()"
+				style="display:block;margin-left:auto; margin-right:auto">I Accept</button>
+		</div>
+		</div>
+		</div>
+	</div>
+</div>
+
+<div id="HelpPage">
+	<table id="HelpHeader" class="headerBar">
+		<tr>
+			<td><button type="button" id="HelpBackButton" class="backButton" onclick="helpBack()">Back</button></td>
+			<td>Help</td>
+			<td><button type="button" id="HelpDoneButton" class="headerButton" onclick="helpDone()">Done</button></td>
+		</tr>
+	</table>
+	<div id="HelpContent">
+	<div id="HelpTOC" class="TOC">
+		<h2>Contents</h2>
+		<ul>
+		<li class="cRef" onclick="showHelp('HelpApplicability')">Applicability</li>
+		<li class="cRef" onclick="showHelp('HelpIO')">Settings, Results, and Errors</li>
+		<li>Pages
+			<ul>
+			<li class="cRef" onclick="showHelp('HelpTrip')">Trips</li>
+			<li class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</li>
+			<li class="cRef" onclick="showHelp('HelpDepDest')">Departure and Destination</li>
+			<li class="cRef" onclick="showHelp('HelpEnrt')">Enroute</li>
+			<li>Instrument Procedure
+				<ul>
+				<li class="cRef" onclick="showHelp('HelpDP')">Departure Procedure</li>
+				<li class="cRef" onclick="showHelp('HelpAP')">Approach Procedure</li>
+				<li class="cRef" onclick="showHelp('HelpHold')">Hold Procedure</li>
+				</ul>
+			</li>
+			<li class="cRef" onclick="showHelp('HelpEmerg')">Emergency</li>
+			<li>More
+				<ul>
+				<li class="cRef" onclick="showHelp('HelpSettings')">Settings</li>
+				<li class="cRef" onclick="showHelp('HelpAC')">Aircraft</li>
+				<li class="cRef" onclick="showHelp('HelpRisk')">Risk Assessment</li>
+				<li class="cRef" onclick="showHelp('HelpTOU')">Terms of Use</li>
+				</ul>
+			</li>
+			</ul>
+		</li>
+		<li class="cRef" onclick="showHelp('HelpOffline')">Offline use</li>
+		<li class="cRef" onclick="showHelp('HelpCompatibility')">Compatibility</li>
+		<li class="cRef" onclick="showHelp('HelpTrouble')">TroubleShooting</li>
+		<li class="cRef" onclick="showHelp('HelpSW')">Software Notes</li>
+		<li class="cRef" onclick="showHelp('HelpHelp')">What You Can Do to Help</li>
+		</ul>
+		<p>
+		Version: <span id="Version"> -</span>
+		<span class="WebApp">
+		<br>
+		(<a href="../C172o/C172.htm" target="_blank">Previous version</a>)
+		</span>
+		</p>
+	</div>
+	<div id="HelpText" class="text">
+	<div id="HelpApplicability">
+	<h2>Applicability</h2>
+	<p>
+	This App supports the Cessna 172S and 172N.
+	</p>
+	</div>
+
+	<div id="HelpIO">
+	<h2>Settings, Results, and Errors</h2>
+	<p>
+	If an invalid or unrecognizable input setting is entered, the results that depend on it will probably
+	indicate <span style="color:red;text-decoration:line-through">Input</span>.
+	If a valid setting is outside the POH envelope, the result will
+	indicate <span style="color:red;text-decoration:line-through">POH</span>.
+	In many cases the parameter that was out of range (e.g. weight, temperature, or altitude)
+	will also be indicated in parenthesis.
+	Keep in mind that a particular result can depend on settings from other pages,
+	and it will indicate an error if that setting is not valid or out of POH range.
+	For example, the range and endurance computations on the <span class="cRef" onclick="showHelp('HelpEnrt')">Enroute</span>
+	page need the departure and destination airport values
+	(e.g. altitude, temperature, altimeter setting) to compute the climb to cruise altitude and descent to the destination.
+	</p>
+	<h3>Vernier slider and thumbwheel picker</h3>
+	<p>
+	There are several numeric input mechanisms that can selected on the
+	<span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page.
+	The "standard" setting uses the native input mechanism for the device for numeric input.
+	On mobile devices it uses the standard popup keypads.
+	On desktop and laptop devices it uses the hardware keyboard.
+	This is the default mechanism on desktop and laptops.
+	</p><p>
+	The "vernier slider" setting causes a "slider" to appear when a numeric input os selected.
+	The slider consists of a knob on a horizontal bar.
+	You can drag the knob horizontally to a position that corresponds to the value you want.
+	You can also simply touch or click the bar near the desired value and the knob will
+	snap to that position after which you can continue to adjust it.
+	For fine adjustments, you can drag vertically up or down along the knob and it will move horizontally by small increments.
+	Think of it as turning a knob on a threaded bar.
+	You can also tap or click the upper or lower parts of the knob to add or subtract a small increment to/from the value;
+	This is the default mechanism for tablets such as iPad.
+	</p><p>
+	The "thumbwheel picker" setting causes a set of thumbwheels similar to the iPhone native thumbwheels to appear.
+	This is the default mechanism on small devices like phones.
+	</p><p>
+	The "numeric keypad" setting causes a calculator-style keypad to appear.
+	The keypad understands the format of the underlying input and will automatically insert decimal points
+	after the maximum number of integer digits are entered.
+	For example, pressing "2", "9", "9", "2" will result in 29.92.
+	The selected input mechanism is associated with each device and is not shared with other
+	devices using "cloud sync" (see below).
+	</p>
+	<h3>Saving input and cloud sync</h3>
+	<p>
+	The App saves all changes to local storage associated with the browser you are using on your device.
+	The App will load the last saved values when started.
+	The saved values can be discarded and reset to defaults on the
+	<span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page.
+	The Settings page also contains a "Cloud backup ID" entry.
+	If this is set and an email address is entered (also on the Settings page)
+	saved values will also be stored on an internet server if the App is currently connected to the internet.
+	This also allows you to share the saved values between devices (e.g. a desktop, an iPad and/or iPhone).
+	In particular, <span class="cRef" onclick="showHelp('HelpTrip')">trips</span> and
+	<span class="cRef" onclick="showHelp('HelpAC')">aircraft</span> set on one device can be easily shared with others.
+	See the <span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page for more information.
+	</p>
+	</div>
+
+	<div id="HelpTrip">
+	<h2>Trips Page</h2>
+	<p>
+	The Trips page is used to save a variety of settings on other pages that may change for different trips.
+	You can set up a weight and balance configuration, departure and destination airports,
+	route distances and winds, and the aircraft to be used.
+	Different saved trips can be selected and the associated values will be loaded into the other pages.
+	The selected trip and aircraft appears near the top of each page.
+	You can create a new trip by pressing the "New" button ("+" button on small devices) under
+	the trip name selector then type in the new trip name.
+	The current values are loaded into the new trip.
+	The trip names and values can be edited at any time by selecting a trip and then pressing the "Edit" button.
+	Press "Done" or switch pages when you are finished editing a trip.
+	A trip can be deleted by pressing the "Delete" button ("-" button on small devices)
+	when the trip to be deleted is selected.
+	</p><p>
+	You may specify a specific aircraft for a trip by selecting it in the Aircraft input.
+	Select "[Any]" to use whatever aircraft is currently selected on the
+	<span class="cRef" onclick="showHelp('HelpAC')">Aircraft</span> page.
+	</p>
+	<h3>Current trip</h3>
+	<p>
+	The first trip in the list is always the "[Current]" trip.
+	This default trip provides an easy way to setup multiple pages in one place.
+	If the other pages are changed so that they no longer reflect the selected trip,
+	the "[Current]" trip is automatically selected and the updated values appear there.
+	If you want to preserve these updates in a trip, simply create a new trip and the
+	current values will be loaded.
+	</p>
+	</div>
+
+	<div id="HelpWB">
+	<h2>Weight and Balance Page</h2>
+	<p>
+	This page displays a weight and balance diagram.
+	The takeoff and landing points will be shown as red if they are outside POH specifications.
+	The points will be in yellow if they are "heavy", "forward" or "aft", as above.
+	Otherwise they will be shown as green.
+	A blue line connects the two points.
+	A blue dotted line shows the CG path between the landing weight and the zero-fuel weight.
+	A two color bar on the right side of the diagram shows how much of the takeoff weight is
+	payload (in green) and how much is fuel (in blue).
+	</p><p>
+	The yellow indication for weight or CG is intended as a warning that you are close enough
+	to the edge that you should probably double-check the accuracy of your weight and placement estimates.
+	For example, a yellow point indicates that now would be a good time to get up the
+	courage to ask your in-laws how much they really weigh.
+	</p>
+	<h3>Weight</h3>
+	<p>
+	The Basic Empty Weight (BEW) is assumed to include all the seats.
+	Unchecking the "seats installed" checkboxes removes the seat weight and arm from the computation.
+	The floor baggage stations are <i>not</i> in POH.
+	The front floor baggage is the average of the Row 1 and Row 2 stations,
+	while the rear floor baggage is the average of the Row 2 and Row 3 stations.
+	The aircraft weight is considered "heavy" or "light" if it's in the upper/lower 20% of the range
+	between the standard empty weight (1626lbs.) and the maximum takeoff or landing weight.
+	The aircraft CG is considered "forward" or "aft" if the CG is within the forward/aft 25% of the range between the CG limits at that weight.
+	</p>
+	<h3>Fuel used</h3>
+	<p>
+	The page has a "Use fuel to destination" checkbox that selects the "Fuel to destination" computed on the
+	<span class="cRef" onclick="showHelp('HelpEnrt')">Enroute</span> page (and also displayed on this page)
+	for the flight fuel usage instead of a separate "Fuel used" input.
+	If the checkbox is not checked, the "Fuel used" field will not be displayed.
+	The "Fuel to destination" will be invalid when there's insufficient fuel to fly the route distance you set
+	(see <span class="cRef" onclick="showHelp('HelpEnrt')">Enroute</span>).
+	In this case, the landing weight will be invalid and the "Fuel" setting will show a warning.
+	When using the "Fuel Used" field, you should include taxi fuel.
+	</p>
+	<h3>Email button</h3>
+	<p>
+	The page contains an "Email" button that will invoke the local email application to send the
+	results of the weight and balance computation to the email address set on the "Settings" page.
+	</p>
+	</div>
+
+	<div id="HelpDepDest">
+	<h2>Departure and Destination Pages</h2>
+	<p>
+	You can optionally enter a departure or destination airport.
+	If the airport is in the built-in database, the airport altitude, magnetic variation, runway alternatives, and runways lengths
+	will be automatically filled in.
+	Departure runways will include any runway slopes.
+	Destination runways will subtract any displaced threshold distance from the runway lengths.
+	If the App is online when an airport is entered, it will get the current METAR data and automatically fill in the weather data.
+	The true north wind direction in the METAR will be adjusted to magnetic north using the airport's magnetic variation.
+	The age of the fetched METAR is also displayed.
+	</p>
+	<h3>Best runway</h3>
+	<p>
+	The runway selector on the Departure and Destination pages can be set to "Best".
+	In this case, when you enter an airport, the App will select the best runway for the current conditions.
+	The selection is based on the runway that has the shortest takeoff or landing roll, is long enough
+	to meet the safety factor (see <span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page)
+	and doesn't have more crosswind than the aircraft's crosswind limitation.
+	The selection takes both wind and slope into account.
+	It will choose a runway with a larger crosswind instead of
+	a runway that is more aligned with the wind but is too short.
+	It will also choose a departure runway that slopes downward in mild wind conditions.
+	If no safe runway is found, then the runway with the shortest roll is chosen, and the warnings
+	on the page will indicate the safety issues.
+	You can manually select another runway instead of the default "Best" selection.
+	</p><p>
+	You can re-fetch the METAR data by hitting the "Get METAR" button.
+	You can clear the airport and METAR data by clearing the airport field.
+	This will set the weather data and runway list back to default values.
+	</p>
+	<h3>Runway database</h3>
+	<p>
+	The runway database is a subset of a global airport database derived from the
+	<a href="http://www.ourairports.com" target="_blank">ourairports.com</a> (thank you!) and the NFDC database.
+	Only runways greater than 1500' in length and with hard surfaces are included.
+	If the airport is not in the runway database, wind data from the METAR will be set to the
+	true direction from the METAR without compensation for magnetic variation.
+	The magnetic variation in the database can be different than the value shown in current charts or used by the tower.
+	It is a computed value based on the <a href="http://www.ngdc.noaa.gov/geomag/WMM/" target="_blank">World Magnetic Model</a>
+	that computes the variation at the airport location as of the start of 2014.
+	This may not take into account local magnetic anomalies.
+	</p>
+	<h3>Safety factor</h3>
+	<p>
+	The takeoff and landing minimum runway includes a safety factor (40% by default) that is
+	adjustable on the <span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page.
+	The ground roll is depicted in green on the runway diagram.
+	The safety factor is depicted in yellow if the runway is safe and in red if the safety factor is not met.
+	In all cases, the minimum safety factor is 200 feet.
+	If the runway length is unknown (i.e. set at zero), neither the ground roll or safety factor is shown in the diagram.
+	</p><p>
+	If the available length of the selected runway is less than the obstacle clearance distance
+	adjusted by the safety factor then a warning is displayed.
+	The warning gives the distance from either the departure end of the runway (DER)
+	or the arrival end of the runway (AER) to check for obstacles.
+	The warning also indicates that runway is does not have adequate safety margins for low IFR (LIFR) conditions
+	since Instrument Approach Procedures are designed to deliver the aircraft 50' above the runway threshold.
+	Similarly, Instrument Departure Procedures require the aircraft to achieve at least 35' above the departure end of the runway.
+	</p>
+	<h3>Stall and Rotation speeds</h3>
+	<p>
+	The page displays the stall speed at maximum takeoff weight.
+	It does not adjust the stall speed for weight as there is significant
+	indicated airspeed error at lower values (near stall and below).
+	The page does display the 1.3*Vs speeds that are weight adjusted (using KCAS converted to KIAS)
+	since that indicates accurately.
+	This means that the displayed 1.3*Vs value may not be 1.3 times the displayed Vs.
+	</p><p>
+	The page also computes the rotation speed adjusted for weight for short field takeoffs.
+	Normal takeoffs use a fixed speed, per the POH.
+	<p>
+	</p>
+	<h3>Accelerate-stop distance</h3>
+	<p>
+	The takeoff estimated accelerate-stop distance calculation includes the takeoff and landing
+	ground rolls at the takeoff weight, plus 3 seconds at the normal rotation speed.
+	</p>
+	<h3>Runway slope</h3>
+	<p>
+	The slope adjustment for takeoff roll is <i>not</i> from the POH.
+	It is based on the aircraft-independent formula from Herrington which can be found at
+	<a href="http://pilotsweb.com/train/takeoff.htm" target="_blank">pilotsweb.com</a>
+	and
+	<a href="http://www.eaa1000.av.org/technicl/takeoff/takeoff.htm" target="_blank">www.eaa1000.av.org</a>.
+	In order to operate within the POH, the adjustment will only increase roll for upslope
+	takeoffs and not decrease roll for downslope takeoffs.
+	</p><p>
+	The "Upslope takeoff minimum headwind" is the headwind required to make taking off
+	upslope have a shorter ground roll than taking off downslope.
+	It is limited to 10kt because taking off with more than a 10kt tailwind is not a good idea, downslope notwithstanding.
+	</p>
+	<h3>Maneuvering speed</h3>
+	<p>
+	The Departure and Destination pages also contain the computed maneuvering speed (Va) at the takeoff and landing weights.
+	</p>
+	</div>
+
+	<div id="HelpEnrt">
+	<h2>Enroute Page</h2>
+	<p>
+	The Enroute page computes several useful numbers.
+	The fuel on board is computed assuming that all the loaded fuel on the
+	<span class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</span> page is used, and using the
+	altitudes and temperatures for the departure and destination airports.
+	The enroute power is set as a percentage of maximum power.
+	The page calculates the engine RPM that achieves the desired power at the recommended cruise lean.
+	Some power levels, especially the lowest and highest, can be outside the range of POH values
+	at certain combinations of altitude and temperature.
+	If this happens, <span style="color:red;text-decoration:line-through">POH</span> will be displayed at the corresponding result.
+	The special power setting "Maximum" and "Long Range" will compute the
+	highest and lowest power setting in RPM that remains within the POH boundaries.
+	The fuel to destination and ETE (Estimated Time Enroute) are computed using the route distance and
+	average wind along the route, which can be obtained from online flight planning tools.
+	An option on the <span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page will
+	replace the fuel used value on the <span class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</span>
+	page with the computed fuel to destination value.
+	</p>
+	<h3>Reserve profiles, range, and endurance</h3>
+	<p>
+	There are four reserve profiles; VFR, IFR, IFR with 50nm alternate, and IFR with 100nm alternate.
+	The three IFR reserves include fuel for 45 minutes of cruising at 3,000' above the destination at the
+	cruise power setting on the assumption that ATC can vector you around at that altitude.
+	This computation is somewhat more conservative than using 45 minutes at the enroute cruising altitude.
+	The 50nm and 100nm alternate options add the fuel for a climb to 3,000' above the destination,
+	followed by a cruise to the alternate at that alititude.
+	The alternate reserve profiles do not model wind.
+	</p><p>
+	Given the selected profile, the page computes the required fuel reserve at the destination,
+	the maximum time to the destination to have the required reserve in the tanks,
+	and the maximum range from the departure airport to the destination using the average head or tail wind.
+	The maximum range takes the average wind into account.
+	The average wind along the route can be obtained from online flight planning tools.
+	</p>
+	<h3>Temperature</h3>
+	<p>
+	The Enroute temperature can use the actual outside air temperature (OAT) or
+	the temperature difference from standard conditions at that altitude (ISA).
+	The OAT value is the same as the static air temperature (SAT).
+	</p>
+	<h3>Route distance</h3>
+	<p>
+	The App will display the great circle distance between the departure and destination airports,
+	if both are entered and in the database.
+	The route distance must be greater than this or it is considered invalid.
+	A warning is displayed if the route distance is greater than 20% more that the great circle distance.
+	</p><p>
+	Some of the results require that the route distance be valid, non-zero, and less than the computed range.
+	A "route distance" warning will display if this is not the case.
+	Other results require that there is enough fuel to cover the climb, descent, and alternate profile.
+	An "insufficient fuel" warning will display if this is not the case.
+	</p>
+	</div>
+
+	<div id="HelpDP">
+	<h2>Departure Procedure Page</h2>
+	<p>
+	The Departure Procedure page computes the climb rate and gradients for departure procedures.
+	The calculations use the takeoff weight from the <span class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</span> page,
+	as well as the settings on the <span class="cRef" onclick="showHelp('HelpDepDest')">Departure</span> page.
+	The initial departure procedure gradient assumes you are climbing at the calculated Vy via the runway heading
+	and the winds are as specified on the Departure page to 500' above the departure airport.
+	The enroute climb gradients are computed with no wind and with a tailwind equal to the departure wind or gust, whichever is higher.
+	This is the worst-case gradient for a turn in any direction.
+	If you feel that the winds aloft will be even worse, then set the departure wind gust higher.
+	If any gradient falls below the required 200' per nm., it will be displayed in red.
+	</p>
+	<h3>Cold temperature altitude adjustment</h3>
+	<p>
+	When the departure airport temperature is below 15&deg;C the Departure Procedure page displays
+	a table for adjusting approach procedure altitudes for temperature.
+	This adjustment is required for temperatures below standard because altimeters are not temperature compensated.
+	In particular, the air pressure lapse rate (the rate at which air pressure changes with altitude) varies with temperature,
+	so while the altimeter will read the airport altitude on the airport given the altimeter setting and current temperature,
+	it will read incorrectly above it at non-standard temperatures.
+	Above 15&deg;C temperature, the true altitude will be higher than indicated altitude.
+	Below 15&deg;C temperature, the true altitude will be lower than indicated altitude which can be dangerous on an approach in IMC.
+	The table provides places to input the various procedure altitudes and computes the appropriate adjusted altitude for each.
+	Use the adjusted altitudes instead of published procedure altitudes.
+	The computation uses a formula published in the IFR magazine November 2009 issue that is
+	based on the Height Above Airport (HAA) for each procedure altitude:
+	Adjusted Altitude = Airport Altitude + HAA*ISA*.004.
+	The result is rounded up to the next 10'.
+	This is a bit more conservative than AIM table 7-2-3.
+	</p>
+	</div>
+
+	<div id="HelpAP">
+	<h2>Approach Procedure Page</h2>
+	<p>
+	The Approach Procedure page computes the climb rate and the climb gradients (under varying conditions)
+	for the approach procedures at the procedure altitudes.
+	The calculations use the landing weight from the <span class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</span> page,
+	as well as the  destination airport settings on the <span class="cRef" onclick="showHelp('HelpDepDest')">Destination</span> page.
+	The two missed approach gradients assume a climb in clean configuration at 130kt. IAS.
+	The gradients are computed with no wind and with a tailwind equal to the destination wind or gust, whichever is higher.
+	This is assumed to be the worst-case gradient for a turn in any direction.
+	If you feel that the winds aloft will be even worse, then set the destination wind gust higher.
+	If any gradient falls below the standard requirement of 200' per nm., it will be displayed in red.
+	</p>
+	<h3>Visual descent point (VDP)</h3>
+	<p>
+	The page contains a Visual Descent Point (VDP) calculation.
+	Enter the Minimum Descent Height (MDH) above the destination airport for the expected approach procedure to use the VDP.
+	The VDP is given as the number of nautical miles (rounded up to the next .1nm) before the runway threshold to descend from the MDH
+	to the threshold using a 4&deg; descent slope.
+	The VDP is only computed for an MDH of 200' or greater.
+	The page also computes a Minimum VDP, which is a possibly closer VDP that allows a 4&deg;
+	descent to the runway while leaving enough room to land.
+	This may be useful when landing at longer runways that don't have an ILS.
+	The landing distance is the greater of 1,500ft. or the safe runway length on the
+	<span class="cRef" onclick="showHelp('HelpDepDest')">Destination</span> page.
+	The destination conditions are summarized in the "Minimum VDP conditions" field below the Minimum VDP.
+	Please carefully verify that these settings and the other settings on the Destination page
+	are correct and modify the Destination page as required.
+	The Minimum VDP is only computed for runways that are 4,000ft or longer.
+	The Minimum VDP will be no closer than .5nm before the runway threshold so that the
+	runway end is in sight before beginning the visual descent.
+	Obviously, using the Minimum VDP rather than the VDP involves some extra risk since
+	you don't have a definite landing target spot in sight as you descend.
+	Don't use it if you are not prepared to take on that risk.
+	</p>
+	<h3>Cold temperature altitude adjustment</h3>
+	<p>
+	When the destination airport temperature is below 15&deg;C the Approach Procedure page displays
+	a table for adjusting approach procedure altitudes for temperature.
+	This adjustment is required for temperatures below standard because altimeters are not temperature compensated.
+	In particular, the air pressure lapse rate (the rate at which air pressure changes with altitude) varies with temperature,
+	so while the altimeter will read the airport altitude on the airport given the altimeter setting and current temperature,
+	it will read incorrectly above it at non-standard temperatures.
+	Above 15&deg;C temperature, the true altitude will be higher than indicated altitude.
+	Below 15&deg;C temperature, the true altitude will be lower than indicated altitude which can be dangerous on an approach in IMC.
+	The table provides places to input the various procedure altitudes and computes the appropriate adjusted altitude for each.
+	Use the adjusted altitudes instead of published procedure altitudes.
+	The computation uses a formula published in the IFR magazine November 2009 issue, based on the Height Above Airport (HAA) for each
+	procedure altitude: Adjusted Altitude = Airport Altitude + HAA*ISA*.004.
+	The result is rounded up to the next 10'.
+	This is a bit more conservative than AIM table 7-2-3.
+	</p>
+	</div>
+
+	<div id="HelpHold">
+	<h2>Hold Page</h2>
+	<p>
+	This page contains a holding pattern entry computer.
+	Setting the heading to the fix and the outbound radial from the fix will compute the entry type,
+	the heading after the fix, and the outbound and inbound headings.
+	The page also shows a diagram of the hold as if it was displayed on a heading indicator while traveling to the fix.
+	You can also drag the heading compass to set the heading or drag the hold to set the radial.
+	The initial course for teardrop and parallel entries are also displayed.
+	</p>
+	</div>
+
+	<div id="HelpEmerg">
+	<h2>Emergency Page</h2>
+	<p>
+	The Emergency page computes a glide distance table that takes into account wind, altitude,
+	destination altitude, and the change in descent rate with altitude.
+	The table allows quick assessment of reachable destinations and to help evaluate whether the primary landing target is
+	still reachable as the winds change during the descent.
+	The glide distance for headwinds is computed assuming the same headwind is maintained all the way to the ground.
+	The glide distance for tailwinds is computed assuming the tailwind decreases linearly to zero at the ground.
+	The table assumes that the aircraft is maintained at 68kt. IAS as recommended in the POH.
+	</p><p>
+	The table has an adjustable row highlight for altitude and a column highlight for wind.
+	The highlights are changed by clicking the desired altitude or wind in the row or column headers.
+	The highlights can be used in an emergency to select your current altitude and head/tail wind.
+	This can help you find the target distance in a large table, and track your gliding distance as you descend
+	and the winds change speed and direction.
+	The altitude highlight is initially set to the cruising altitude on the
+	<span class="cRef" onclick="showHelp('HelpEnrt')">Enroute</span> page.
+	</p>
+	<h3>Temperature adjustment</h3>
+	<p>
+	The OAT column gives the expected OAT at each altitude during the descent.
+	You can compare it to the current OAT. If it's more than 5&deg;C off, then adjust the ISA setting.
+	The ISA setting will affect the results more for stronger winds and higher glides.
+	The altimeter setting also has an effect (glide TAS), but it's small, so only the standard setting is used in the table.
+	</p>
+	<h3>Glide procedures</h3>
+	<p>
+	In an emergency glide, if you have a GPS and are headed towards an airport or other GPS identifiable point it's a good idea
+	to also set a VNAV target to monitor the descent.
+	If the Vertical Speed Required (VSR) field on the GPS is greater than your VSI indication, then things are looking good.
+	Both VSR and VSI should decrease somewhat as you descend.
+	</p>
+	</div>
+
+	<div id="HelpSettings">
+	<h2>Settings Page</h2>
+	<p>
+	This page contains basic application settings.
+	The page also contains a checkbox that forces the <span class="cRef" onclick="showHelp('HelpEmerg')">Emergency</span>
+	page to be display on start up.
+	Otherwise the App will start on the page index on small devices or the
+	<span class="cRef" onclick="showHelp('HelpTrip')">Trips</span> page on everything else.
+	</p>
+	<h3>Email address and Cloud ID</h3>
+	<p>
+	The email address is used to send the Weight and Balance results, when the "Email" button on the
+	<span class="cRef" onclick="showHelp('HelpWB')">Weight and Balance</span> page is pressed.
+	It is also used in conjunction with the "Cloud sync ID" to save the current state of the App to a server on the internet
+	(a.k.a. the "cloud) and to share it between devices.
+	The server stores the data under an ID that is a combination of the email address and cloud ID.
+	The cloud ID is up to you, with some restrictions and considerations (see below).
+	It is assumed that the email address is unique to each user, while the cloud ID may not be.
+	For example, you can set up <span class="cRef" onclick="showHelp('HelpTrip')">trips</span> and
+	<span class="cRef" onclick="showHelp('HelpAC')">aircraft</span> on your desktop and it will appear on your iPad
+	assuming the email and cloud ID are set the same on both devices.
+	If cloud sync is disabled (i.e. the Cloud ID is blank), the email address is only stored locally and is not used for any other purpose.
+	</p><p>
+	The App will use locally saved values when they are the more recent ones (e.g. you used the App offline) and will then overwrite the cloud values.
+	Simultaneously using two devices with the same email and cloud IDs can lead to confusion.
+	Similarly, if one device is set with very inaccurate time (unlikely nowadays) it can also lead to confusion about which version is more recent.
+	The App will not load the cloud values when another device with a more recent version of the App has saved them previously,
+	and it will not write saved values to the cloud when this occurs.
+	This usually only happens for a few seconds when the App is about to update itself
+	(see <span class="cRef" onclick="showHelp('HelpOffline')">Offline use</span>).
+	</p><p>
+	The "Cloud sync ID" can be any string of alphabetic, numeric and some special characters.
+	The App silently removes any characters that are not letters, numbers or one of "!#$%&amp;'()*+,-.;=@[]^_`{}~" from the email and cloud ID
+	(e.g. spaces, double quotes, ":", "?", "&lt;", and "&gt;" among others are removed) for the purposes of cloud sync, so avoid these characters.
+	The values and ID are <b>not</b> stored or sent securely in the cloud and they are visible to the server administrators,
+	so don't use sensitive passwords.
+	If you don't want someone who knows your email address to mess with your saved values,
+	don't choose an easily guessable ID (e.g. your tail number).
+	Saved cloud values that have not been used for a long time may eventually be discarded.
+	</p>
+	<h3>Takeoff and landing safety factors</h3>
+	<p>
+	The page also allows you to set your own safety factors for departure and destination runways.
+	These add the entered percentage to the ground roll to compute the runway requirement that is considered safe
+	(see the <span class="cRef" onclick="showHelp('HelpDepDest')">Departure and Destination</span> pages).
+	</p>
+	<h3>Units</h3>
+	<p>
+	The page provides several selectors for various units:
+	</p>
+	<ul>
+	<li>Altimeter (inches of mercury, hectopascals)</li>
+	<li>Runway length (feet, meters)</li>
+	<li>Fuel (gallons, liters)</li>
+	<li>Weight (pounds, kilograms)</li>
+	</ul>
+	<h3>Reset</h3>
+	<p>
+	The page also contains a button to reset input data to the defaults.
+	</p>
+	</div>
+
+	<div id="HelpAC">
+	<h2>Aircraft Page</h2>
+	<p>
+	This page contains some basic information on individual aircraft, such as model, Basic Empty Weight, and empty CG.
+	You may enter the information for multiple aircraft, if desired.
+	Create a new aircraft by pressing the "New" button ("+" button on small devices) under the registration number selector,
+	then type in the new registration number.
+	When the App runs the first time, there is one aircraft labeled "[NONE]" which disappears when there's more than one aircraft.
+	If at least one aircraft is not created, every page will contain a warning that the default settings are being used.
+	Delete an aircraft by selecting it and then pressing the "Delete" button ("-" button on small devices).
+	</p>
+	<h3>Aircraft model</h3>
+	<p>
+	The page contains a selector for aircraft model.
+	Some models can carry different amounts of fuel.
+	Selecting a model will cause the appropriate fields to be removed or added to the Weight and Balance page.
+	Selecting a different model can cause invalid input indications on some pages.
+	For example, switching between models may cause the fuel amount to be invalid if it is greater than the new model's fuel capacity.
+	</p>
+	</div>
+
+	<div id="HelpRisk">
+	<h2>Risk Assessment Page</h2>
+	<p>
+	This page contains a risk assessment tool.
+	The risk assessment adds up all the risk elements and gives a recommendation.
+	Most risk elements count for one point each.
+	Some risk elements count for more:
+	</p>
+	<dl>
+		<dt>5 points:</dt>
+			<dd>Penetration of convective Sigmet area.</dd>
+			<dd>Forecast moderate icing.</dd>
+			<dd>Autopilot inoperative.</dd>
+			<dd>Departure or destination runway contamination (ice, snow, standing water), or soft surface.</dd>
+			<dd>Enroute over water or mountains beyond gliding distance to a runway.</dd>
+			<dd>IMC at cruise altitude with temperatures below freezing.</dd>
+			<dd>Enroute at night or ground-level IMC below.</dd>
+			<dd>Destination near minimums, in darkness, low visibility, icing nearby, or low IFR over a wide area.</dd>
+			<dd>Destination crosswind &ge;12kt. with a narrow runway or low level wind shear.</dd>
+		<dt>3 points:</dt>
+			<dd>&gt; 15 day currency.</dd>
+			<dd>Illness, cold, or flu.</dd>
+			<dd>Personal or relationship issues.</dd>
+			<dd>Business issues.</dd>
+			<dd>Destination wind or gust &ge;20kt.</dd>
+<!--
+		<dt>10 points:</dt>
+-->
+		<dt>No-go items:</dt>
+			<dd>
+			<dd>Possible penetration of thunderstorm.</dd>
+			<dd>Possible penetration of &ge;30dbZ (red on Nexrad) precipitation.</dd>
+			<dd>Possible penetration of area near icing pilot report.</dd>
+			<dd>Possible penetration of freezing rain.</dd>
+	</dl>
+	<p>
+	Some combinations of risk elements count for additional points (i.e. including the points of the individual risk elements):
+	</p>
+	<dl>
+		<dt>2 additional points:</dt>
+			<dd>&gt; 15 day currency with IMC or night in any phase of flight.</dd>
+		<dt>3 additional points:</dt>
+			<dd>Circle to land in daytime in less than VMC conditions.</dd>
+		<dt>4 additional points:</dt>
+			<dd>Night visual or non-precision approach with no operative visual glideslope.</dd>
+		<dt>No-go items:</dt>
+			<dd>Enroute over water beyond gliding distance at night or sealevel IMC.</dd>
+			<dd>Autopilot inoperative with IMC at any phase of flight.</dd>
+	</dl>
+	<p>
+	The results are displayed on a meter with the numeric result shown at the bottom.
+	There are four overall risk recommendation categories:
+	</p>
+	<dl>
+		<dt>Low risk (0-4 points):</dt>
+			<dd>You are good to go.</dd>
+		<dt>Moderate risk (5-9 points):</dt>
+			<dd>Consider alternatives that might mitigate some risk items.</dd>
+		<dt>High risk (10-29 points):</dt>
+			<dd>Have a serious alternative plan. Consider consulting with a CFI or another pilot.</dd>
+		<dt>Extreme risk (&ge; 30 points):</dt>
+			<dd> No-go. Wait for conditions to change.</dd>
+	</dl>
+	</div>
+
+	<div id="HelpTOU">
+	<h2>Terms of Use Page</h2>
+	<p>
+	The Terms of Use page will appear as the initial page unless the checkbox that indicates that the App
+	is on a device used by one person is selected.
+	Once this checkbox is selected, the Weight and Balance page on larger displays or
+	Page Index on small displays will be the initial page.
+	This is intended to ensure that all users of the App agree to the terms of use.
+	</p>
+	</div>
+
+	<div id="HelpOffline">
+	<h2>Offline use</h2>
+	<p>
+	The native (IOS, Android, etc.) versions of the App will run fine while disconnected.
+	The browser-based version (WebApp) can run offline as well.
+	Browsers that support the HTML5 application cache (IE9, Safari, Android, and others) should be able to view this WebApp
+	while not connected to the Internet after the page has been loaded once.
+	The browser will update to new versions automatically.
+	When the browser detects that a new version is available, you will see a popup message that tells you it's changing to the new version.
+	</p><p>
+	iPhone and iPad users that are accessing the WebApp version through Safari need to do a few more steps to enable offline use.
+	Once the page is loaded for the first time in the Safari, add the page to the Home Screen
+	(use the forward icon at the bottom of the screen in iPhone or the top of the screen in iPad).
+	Use the home screen icon at least once while still connected to the internet to load the WebApp into the cache.
+	The home screen icon will then be available offline; the page in Safari will not.
+	</p>
+	</div>
+
+	<div id="HelpCompatibility">
+	<h2>Browser Compatibility</h2>
+	<p>
+	The WebApp has been tested on the following platforms:
+	</p>
+	<ul>
+	<li>Internet Explorer 9</li>
+	<li>iPhone 3 and 4</li>
+	<li>iPad</li>
+	<li>Firefox 3.6, 4</li>
+	<li>Safari 5</li>
+	<li>Chrome 10</li>
+	<li>Android (Nexus 7)</li>
+	</ul>
+	<p>
+	Older browsers that don't support HTML5 canvas (e.g. IE7, IE8) will not work.
+	</p>
+	<h2>Native App Compatibility</h2>
+	<p>
+	The App has been tested with IOS6+ (iPhone and iPad) and Android 4+.
+	</p>
+	</div>
+
+	<div id="HelpTrouble">
+	<h2>Troubleshooting</h2>
+	<p>
+	The browser-based WebApp versions store user input data in local storage associated with each website for the browser you are using.
+	As noted above, the WebApp itself is stored in the application cache for offline use.
+	If the WebApp is behaving in an unusual way, either bits of storage may be corrupted.
+	The native versions store data in device storage associated with the application.
+	</p><p>
+	Browsers have different ways of clearing the application cache and site data.
+	On IOS devices (e.g. iPad and iPhone) go to the Settings App, then Safari->Advanced->Website Data,
+	then delete the data associated with the site from which you running the WebApp
+	(e.g. pohperformance.com) by swiping the line to the left and hitting "delete".
+	</p><p>
+	Some browsers will occasionally throw away local storage and the application cache.
+	It's a good idea to start the WebApp before flight to make sure it's resident and to reconnect with cloud sync.
+	</p><p>
+	You may send a trouble report by hitting the "Send trouble report" button below.
+	This requires at least a valid email address to be entered on the
+	<span class="cRef" onclick="showHelp('HelpSettings')">Settings</span> page.
+	</p>
+	<div style="width:100%">
+		<button type="button" onclick="mailTR()"
+			style="display:block;margin-left:auto; margin-right:auto">Send trouble report</button>
+	</div>
+	</div>
+
+	<div id="HelpSW">
+	<h2>Software Notes</h2>
+	<p>
+	Most of the C172 performance data is given in the form of tables of up to three parameters.
+	For example, weight, ISA delta, and pressure altitude.
+	The POH gives no guidance as to how to interpolate the values for intermediate values, so the App proceeds as follows:
+	</p>
+	<ul>
+	<li>
+	For one parameter tables, it returns the value in the table if an exact match.
+	Otherwise, it interpolates the two values at the table entries that bracket the given parameter.
+	</li><li>
+	For two or more parameter tables, if the first parameter matches it returns the matched or interpolated value
+	for the next parameter using the matching or bracketing values.
+	If the first parameter does not match, it returns the interpolation of the two interpolated or matched values
+	returned for each of the entries that bracket the first parameter.
+	</li><li>
+	This procedure is repeated for any subsequent parameters.
+	</li>
+	</ul>
+	<p>
+	So a one parameter table can involve interpolating up to 2 table entries.
+	A two parameter table can involve recursively interpolating up to 6 (2+4) values, based on up to 4 different table entries.
+	A three parameter table can involve recursively interpolating up to 14 (2+4+8) values, based on up to 8 different table entries.
+	</p><p>
+	The maneuvering speed (Va) is computed from the MAXTOW value by computing V<sub>a</sub> * SQRT(Weight / MAXTOW).
+	</p><p>
+	Typing "XYZZY" (look it up) for the aircraft registration number will invoke a regression test.
+	Warning: this will discard any current settings and may affect the saved values as well.
+	</p><p>
+	The "Spinning Wheel" value picker software that is used in the iPhone User Interface is provided under the MIT license.
+	See <a href="http://cubiq.org/dropbox/mit-license.txt" target="_blank">cubiq.org</a>.
+	Many thanks to Matteo Spinelli for providing this code to the Javascript community.
+	</p>
+	</div>
+
+	<div id="HelpHelp">
+	<h2>What You Can Do to Help</h2>
+	<p>
+	Please send any feedback to <a href="mailto:info@pohperformance.com">info@pohperformance.com</a>.
+	</p><p>
+	If you like this App and would like to help ensure its reliability then please help run some tests.
+	Try several different scenarios that you normally encounter on the App and compare the results to the POH.
+	Try scenarios at the edge or beyond the POH envelope, as well.
+	Ideally, each scenario would include the settings for at least the takeoff, enroute, and landing phases.
+	After each scenario, copy the state of the application in the debugging section below
+	and paste it into an email to <a href="mailto:info@pohperformance.com">info@pohperformance.com</a>.
+	Include a rough description of the scenario and whether you thought the result was correct or not in the email.
+	</p><p>
+	If you'd like to add other aircraft models, add features, or fix bugs, the development environment for this App can be found on
+	<a href="https://sourceforge.net/projects/pohperformance/" target="_blank">Sourceforge</a>.
+	</p><p>
+	Thanks for your support.
+	</p>
+	</div>
+	</div>
+	</div>
+</div>
+
+<div id="ConsoleDiv" style="display:none">
+	<textarea id="Console" rows="5" cols="50"></textarea>
+</div>
+
+</body>
+</html>

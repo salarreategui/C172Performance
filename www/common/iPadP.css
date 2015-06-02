@@ -1,0 +1,69 @@
+/*
+ * Style for iPad in Portrait orientation.
+ * This manages the width of the elements precisely (i.e in px).
+ * The wider format (Desktop.css) uses percentages.
+ */
+@import url(desktop.css);		/* import Desktop.css, override it below */
+
+body {
+	width: 768px;
+}
+
+/*
+ * Style the tabs and the rule underneath them.
+ */
+#HomeIndex {
+}
+
+/*
+ * Style the regular pages
+ */
+.page {
+}
+
+/*
+ * Style the More page; index and pages area
+ */
+
+.mpage {
+	left: 236px;
+}
+
+#TripInput, #WBInput {
+	width: 358px;
+}
+
+#WBOutput {
+	left: 364px;
+}
+
+#DepInput {
+	width: 378px;
+}
+
+#DepOutput {
+	left: 384px;
+}
+
+#EnrtInput, #DestInput {
+	width: 369px;
+}
+
+#EnrtOutput, #DestOutput {
+	left: 375px;
+}
+
+#EmergInput {
+	width: 288px;
+}
+
+#EmergOutput {
+	left: 294px;
+}
+
+/*
+ * Style the sub-pages
+ */
+#ACInput, #SetInput, #DPInput, #DPOutput, #APInput, #APOutput, #HoldInput, #HoldOutput, #RiskInput, #RiskOutput {
+	right: 70px;
+}

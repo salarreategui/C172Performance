@@ -1,0 +1,20 @@
+#vs-wrapper {
+	position: fixed;
+	z-index: 1000;
+	left: 0px;
+	right: 0px;
+	font-family: helvetica, sans-serif;
+	background-color: rgb(100,100,110);
+	text-align: left;
+}
+
+#vs-canvasWrapper {
+	width: 100%;
+	padding: 8px;
+}
+
+#vs-canvas {
+	background-color: white;
+	border-radius: 8px;
+	margin: 0px;
+}

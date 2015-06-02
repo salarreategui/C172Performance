@@ -1,0 +1,70 @@
+#kp-wrapper {
+	position: fixed;
+	z-index: 1000;
+	font-family: helvetica, sans-serif;
+	background-color: rgb(100,100,110);
+	text-align: left;
+}
+
+#kp-wrapper .headerBar button {
+	min-width: 60px;
+}
+
+#kp-valueBar {
+	background-color: rgb(100,100,110);
+	padding: 6px;
+}
+
+#kp-valueBar table {
+	vertical-align: middle;
+	width: 100%;
+}
+
+#kp-value {
+	text-align: center;
+	font-size: 34px;
+	height: 40px;
+	background-color: white;
+	max-width: 162px;
+	margin: 10px auto 0 auto;
+}
+
+#kp-units {
+	font-size: 30px;
+	color: white;
+	background-color: rgb(100,100,110);
+	width: 0px;
+	padding: 0px;
+}
+
+#kp-pad {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 6px;	/* border width */
+}
+
+#kp-pad td {
+	background-color: rgb(230,230,230);
+	font-size: 50px;
+	text-align: center;
+	width: 84px;			/* default */
+	height: 84px;			/* default */
+	border-radius: 6px;
+	padding: 0;
+}
+
+/* 3.5" phones in landscape, use smaller pads */
+@media only screen and (min-device-height: 320px) {
+	#kp-pad td {
+		width: 48px;
+		height: 48px;
+	}
+}
+
+/* 3.5" phones in portrait, use smaller pads */
+@media only screen and (min-device-height: 480px) {
+	#kp-pad td {
+		width: 70px;
+		height: 70px;
+	}
+}

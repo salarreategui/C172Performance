@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+	xmlns:gap="http://phonegap.com/ns/1.0"
+	id="com.pohperformance.C172"
+	version="2.4.0"
+	versionCode="15"> <!-- vers chg: version, increment versionCode (Android submitted bundle number) -->
+	<name>
+		Cessna 172 Performance
+	</name>
+
+	<description>
+		Cessna 172 performance calculator.
+	</description>
+
+	<author href="http://phoperformance.com" email="info@phoperformance.com">
+		Steven Kleiman
+	</author>
+
+	<preference name="phonegap-version" value="3.7.0" />
+	<preference name="permissions" value="none" />
+	<preference name="target-device" value="universal" />
+	<preference name="orientation" value="default" />
+	<preference name="fullscreen" value="false" />
+	<preference name="detect-data-types" value="false" />
+	<preference name="webviewbounce" value="false" />
+	<preference name="ios-statusbarstyle" value="black-opaque" />
+	<preference name="show-splash-screen-spinner" value="true" />
+	<preference name="SplashScreenDelay" value="8000" />
+	<preference name="AutoHideSplashScreen" value="true" />
+	<preference name="load-url-timeout" value="30000" />
+	<preference name="android-minSdkVersion" value="17" /> <!-- Android 4.2+ -->
+
+	<gap:config-file platform="ios" parent="CFBundleShortVersionString"><string>02040000</string></gap:config-file>
+	<!-- vers chg: CFBundleShortVersionString x.y.z -> xxyyzznn, where nn is IOS submitted bundle number (starting at 0)-->
+
+	<gap:plugin name="com.phonegap.plugin.statusbar" />
+	<gap:plugin name="org.apache.cordova.splashscreen" />
+	<!-- <gap:plugin name="com.jamiestarke.webviewdebug" version="1.0.8" /> -->
+
+	<icon src="img/C172-icon-app-android-ldpi.png"  gap:platform="android" gap:density="ldpi" />
+	<icon src="img/C172-icon-app-android-mdpi.png"  gap:platform="android" gap:density="mdpi" />
+	<icon src="img/C172-icon-app-android-hdpi.png"  gap:platform="android" gap:density="hdpi" />
+	<icon src="img/C172-icon-app-android-xhdpi.png" gap:platform="android" gap:density="xhdpi" />
+	<gap:splash src="img/C172-splash-android-port-ldpi.png"  gap:platform="android" gap:density="ldpi" />
+	<gap:splash src="img/C172-splash-android-port-mdpi.png"  gap:platform="android" gap:density="mdpi" />
+	<gap:splash src="img/C172-splash-android-port-hdpi.png"  gap:platform="android" gap:density="hdpi" />
+	<gap:splash src="img/C172-splash-android-port-xhdpi.png" gap:platform="android" gap:density="xhdpi" />
+
+	<icon src="img/C172-icon-app-ios-57.png"  gap:platform="ios" width="57" height="57" />
+	<icon src="img/C172-icon-app-ios-72.png"  gap:platform="ios" width="72" height="72" />
+	<icon src="img/C172-icon-app-ios-76.png"  gap:platform="ios" width="76" height="76" />
+	<icon src="img/C172-icon-app-ios-114.png" gap:platform="ios" width="114" height="114" />
+	<icon src="img/C172-icon-app-ios-120.png" gap:platform="ios" width="120" height="120" />
+	<icon src="img/C172-icon-app-ios-144.png" gap:platform="ios" width="144" height="144" />
+	<icon src="img/C172-icon-app-ios-152.png" gap:platform="ios" width="152" height="152" />
+	<gap:splash src="img/C172-splash-ipad-port.png" gap:platform="ios" width="768" height="1004" />
+	<gap:splash src="img/C172-splash-ipad-land.png" gap:platform="ios" width="1024" height="748" />
+	<gap:splash src="img/C172-splash-ipad-port-2x.png" gap:platform="ios" width="1536" height="2008" />
+	<gap:splash src="img/C172-splash-ipad-land-2x.png" gap:platform="ios" width="2048" height="1496" />
+	<gap:splash src="img/C172-splash-iphone-port.png" gap:platform="ios" width="320" height="460" />
+	<gap:splash src="img/C172-splash-iphone-port-2x.png" gap:platform="ios" width="640" height="960" />
+	<gap:splash src="img/C172-splash-iphone5-port.png" gap:platform="ios" width="640" height="1136" />
+
+	<access origin="*" />
+</widget>

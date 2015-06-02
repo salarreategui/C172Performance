@@ -1,0 +1,864 @@
+/*
+ * Style for desktops or iPad in landscape orientation.
+ * This manages the width of the elements by percentage to allow a variety of wide formats.
+ */
+body {
+	width: 100%;
+	font: normal 13pt Helvetica, Arial, sans-serif;
+	min-width: 768px;
+	background-color: rgb(220,220,225);
+	-webkit-user-select: none;
+	-webkit-text-size-adjust: none;
+}
+
+/*
+ * Styling for generic elements.
+ * Do this first to override later.
+ */
+h2 {
+	font: bold 13pt Helvetica, Arial, sans-serif;
+}
+
+h3 {
+	font: bold 13pt Helvetica, Arial, sans-serif;
+	margin-left: 10px;
+}
+
+.text p, .text dl, .text li {
+	font: normal 13pt Helvetica, Arial, sans-serif;
+	margin-left: 10px;
+}
+
+ul {
+	list-style-type: disc;
+	list-style-position: outside;
+	margin-left: 0px;
+	padding-left: 1.1em;
+}
+
+li {
+	margin-left: 0px;
+	padding-left: 0px;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+tr {
+	border-top: 1px solid #B4B4B4;
+	min-height: 34px;
+}
+
+td {
+	vertical-align: middle;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	min-height: 25px;
+	height: 25px;
+}
+
+thead tr {
+	border-bottom: 1px solid #B4B4B4;
+}
+
+th {
+	font-weight: bold;
+	text-decoration: underline;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+td:first-child {
+	padding-left: 6px;
+}
+
+td:last-child {
+	padding-right: 6px;
+}
+
+tr:first-child {
+	border-top: 0;
+	/*border-top-left-radius: 8px;border-top-right-radius: 8px;*/
+}
+
+tr:last-child {
+	/*border-bottom-left-radius: 8px;border-bottom-right-radius: 8px;*/
+}
+
+select {
+	color: darkblue;
+	font: bold 12pt Helvetica, Arial, sans-serif;
+}
+
+input {
+	/* The default input styling seems to come out too small without some help. */
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	color: darkblue;
+	padding: 2px;
+}
+
+input[type="button"], button {
+	color: black;
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	background-color: #e8e8e8;
+	border: 1px solid #808080;
+	-webkit-appearance: none;
+	border-radius: 4px;
+	height: 24px;
+	min-width: 24px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.inputButton {
+	float: right;
+	margin-right: 8px;
+	color: black;
+	min-height: 26px;
+}
+
+canvas {
+	font: bold 15pt Helvetica, Arial, sans-serif;
+	margin: 5px;
+}
+
+.Slider {
+	font-weight: bold;
+	padding-top: 0;
+}
+
+.text {
+	text-align: justify;
+	padding: 4px;
+}
+
+.Output {
+	color: darkblue;
+}
+
+.dropdown {
+	/* not used in desktop */
+}
+
+/*
+ * Some browsers mangle the input width. Adjust.
+ */
+input.n2 {
+	min-width: 2em;
+	max-width: 2.5em;
+	text-align: right;
+}
+
+input.n3 {
+	min-width: 2.25em;
+	max-width: 3em;
+	text-align: right;
+}
+
+input.n4 {
+	min-width: 2.5em;
+	max-width: 4em;
+	text-align: right;
+}
+
+input.n5 {
+	min-width: 3em;
+	max-width: 5em;
+	text-align: right;
+}
+
+input.n6 {
+	min-width: 4em;
+	max-width: 6em;
+	text-align: right;
+}
+
+input.n7 {
+	min-width: 4.5em;
+	max-width: 7em;
+	text-align: right;
+}
+
+input.n8 {
+	min-width: 5em;
+	max-width: 8em;
+	text-align: right;
+}
+
+input.S4 {
+	min-width: 3.25em;
+	max-width: 4em;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S5 {
+	min-width: 3em;
+	max-width: 4em;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S6 {
+	min-width: 4em;
+	max-width: 5em;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+input.S7 {
+	min-width: 4em;
+	max-width: 5em;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+#DestWindDir, #DepWindDir, #DestWind, #DepWind {
+	text-align: right;
+}
+
+/*
+ * Style the header bar and nav buttons.
+ */
+.headerBar {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+
+	background-color: rgb(100,100,110);
+	font: bold 14pt Helvetica, Arial, sans-serif;
+	border-bottom: 1px solid rgb(45, 54, 66);
+	-webkit-box-sizing: border-box;
+}
+
+.headerBar td:first-child, .headerBar td:last-child {
+	width: 105px;
+}
+
+.headerBar td:nth-child(2), .headerBar td:nth-child(2) {
+	text-align: center;
+	color: white;
+	font: bold 14pt Helvetica, Arial, sans-serif;
+	text-shadow: #2d3642 0 -1px 0;
+	white-space: nowrap;
+}
+
+.headerBar td button {
+	margin-top: auto;
+	margin-bottom: auto;
+	/* base metrics used to ensure a minumum size and specify a max size that can be used to trim the contents */
+	min-width: 40px;
+	max-width: 100px;
+	height: 30px;
+
+	/* set up the font appearance */
+	font: bold 16px Helvetica, Arial, sans-serif;
+	text-align: center;
+	color: white;
+	text-shadow: rgba(0, 0, 0, .6) 0px -1px 0px;
+	padding-right: 4px;
+	padding-left: 4px;
+
+	background-color: rgb(160,160,170);
+	border: 1px solid black;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.headerBar td:last-child button {
+	float: right;
+}
+
+.headerBar td:first-child button {
+	float: left;
+}
+
+.backButton {
+	background-image: url("img/chevron-left-white.png");
+	background-repeat: no-repeat;
+	background-position: 4px 50%;
+	padding-left: 16px !important;
+}
+
+/*
+ * Style Home Index tabs and the rule underneath them.
+ */
+#HomeIndex {
+	position: fixed;
+	display: block;
+	visibility: visible;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	height: 48px;
+	min-width: 768px;
+	padding-top: 4px;
+	padding-left: 2px;
+	padding-right: 4px;
+	padding-bottom: 0px;
+	font: bold 13pt Helvetica, Arial, sans-serif;
+	text-decoration: none;
+	border-bottom-style: solid;
+	border-bottom-width: 5px;
+	border-bottom-color: darkblue;
+	background-color: rgb(220,220,225);
+}
+
+#HomeIndex table {
+	float: left;
+	width: 90px;
+	height: 48px;
+	margin-left: 5px;
+	margin-bottom: 0px;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+
+#HomeIndex td {
+	font-size: 11pt;
+	padding: 2px;
+	border-style: none;
+	text-align: center;
+}
+
+.unselected-tab {
+	color: white;
+	background-color: gray;
+}
+
+.selected-tab {
+	color: white;
+	background-color: darkblue;
+}
+
+/*
+ * Style the index areas
+ */
+.Index {
+	position: fixed;
+	top: 95px;
+	bottom: 0px;
+	left: 4px;
+	width: 227px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+	font: bold 13pt Helvetica, Arial, sans-serif;
+}
+
+.Index table, .Tab table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	padding: 0px;
+}
+
+.Index tr {
+	padding: 0px;
+}
+
+.Index td {
+	font-size: 13pt;
+}
+
+.Index tr:first-child td {
+	border-top: 1px solid #B4B4B4;
+}
+
+.Index tr td {
+	border-bottom: 1px solid #B4B4B4;
+	height: 50px;
+}
+
+.Index tr td:first-child {
+	border-left: 1px solid #B4B4B4;
+}
+
+.Index tr td:last-child {
+	border-right: 1px solid #B4B4B4;
+}
+
+.Index tr:first-child td:first-child {
+	border-top-left-radius: 8px;
+}
+
+.Index tr:first-child td:last-child {
+	border-top-right-radius: 8px;
+}
+
+.Index tr:last-child td:first-child {
+	border-bottom-left-radius: 8px;
+}
+
+.Index tr:last-child td:last-child {
+	border-bottom-right-radius: 8px;
+}
+
+.Index tr td:last-child {
+	content: " ";
+	background-image: url("img/chevron-right-grey.png");
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	width: 25px;
+}
+
+.unselected-list {
+	text-decoration: none;
+	color: black;
+	background-color: white;
+}
+
+.selected-list {
+	text-decoration: none;
+	color: white;
+	background-color: darkblue;
+}
+
+/*
+ * Style the regular pages
+ */
+.page {
+	display: none;		/* turned on in selectPage() */
+	position: fixed;
+	top: 57px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	padding-left: 3px;
+	padding-right: 3px;
+	min-width: 762px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Style the More page; index and pages area
+ */
+.mpage {
+	display: none;		/* turned on in selectMorePage() */
+	position: fixed;
+	top: 57px;
+	bottom: 0px;
+	right: 0px;
+	left: 233px;
+	padding-right: 3px;
+	padding-bottom: 3px;
+	min-width: 529px;
+	max-width: 600px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Style warnings and the warning at the top of the page when using the default aircraft parameters.
+ */
+.defaultWarn, .warn {
+	color: red;
+}
+
+/*
+ * Style the basic layout of the pages.
+ * For desktop style, we use two columns with the left having the input and the right the output.
+ */
+#TripInput, #WBInput, #DepInput, #EnrtInput, #DestInput, #EmergInput {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	max-width: 600px;
+}
+
+#TripInput2, #WBOutput, #DepOutput, #EnrtOutput, #DestOutput, #EmergOutput {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	max-width: 600px;
+}
+
+#WBInput {
+	right: 54%;
+}
+
+#WBOutput {
+	left: 46%;
+}
+
+#TripInput, #DepInput, #EnrtInput, #DestInput {
+	right: 51%;
+	max-width: 600px;
+}
+
+#TripInput2, #DepOutput, #EnrtOutput, #DestOutput {
+	left: 49%;
+}
+
+#EmergInput {
+	right: 62%;
+}
+
+#EmergOutput {
+	left: 38%;
+}
+
+/*
+ * Style the major page classes
+ */
+.borderHeader {
+	margin-top: 10px;
+	margin-bottom: 4px;
+	min-height: 26px;
+	width: 100%;
+}
+
+.borderHeader td {
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	padding-left: 4px;
+	padding-right: 4px;
+	vertical-align: middle;
+}
+
+/* rounded corners */
+.border {
+	font: bold 12pt Helvetica, Arial, sans-serif;
+	border-radius: 8px;
+	border: 1px solid #B4B4B4;
+	background-color: white;
+}
+
+.iTable, .oTable, .coldTable {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.iTable tr {
+	height: 48px;	/* make input rows a bit bigger */
+}
+
+.oTable tr {
+	height: 36px;
+}
+
+/*
+ * Style error rows.
+ */
+.errRow {
+	display: none;		/* turned on in setIOError() */
+	border-top: 0;		/* no border between error and element */
+}
+
+.errRow td {
+	padding-top: 0;
+	padding-bottom: 0;
+	min-height: 0;
+	height: 0;
+}
+
+/*
+ * Style the general Input and Output column layout on each page.
+ */
+.iTable td:first-child,
+.oTable td:first-child {
+	text-align: left;
+}
+
+.canvasCell,
+.iTable td[colspan="2"] {
+	text-align: center;
+}
+
+.iTable td:nth-child(2),
+.oTable td:nth-child(2),
+.oTable td:nth-child(4) {
+	text-align: left;
+	white-space: nowrap;
+}
+
+.oTable td:nth-child(3) {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.errRow td:nth-child(2),
+#DepRunwaysText, #DestRunwaysText,
+#APMinVDPInfo {
+	white-space: normal;
+}
+
+.oTable td:first-child,
+.oTable td:nth-child(3) {
+	padding-right: 4px;
+}
+
+/*
+ * Style specific pages.
+ */
+#TripInput, #TripInput2, #WBInput, #DepInput, #EnrtInput, #DestInput, #EmergInput,
+#WBOutput, #DepOutput, #EnrtOutput, #DestOutput, #EmergOutput {
+	padding-left: 3px;
+	padding-right: 3px;
+	padding-bottom: 3px;
+}
+
+#TripPage .iTable td:first-child {
+	width: 35%;
+}
+
+#WBPage .iTable td:first-child, #WBPage .oTable td:first-child,
+#DepPage .iTable td:first-child,
+#EnrtPage .iTable td:first-child, #EnrtPage .oTable td:first-child,
+#DestPage .iTable td:first-child, #DestPage .oTable td:first-child,
+#ACPage .iTable td:first-child,
+#SetPage .iTable td:first-child {
+	width: 50%;
+}
+
+#DepPage .oTable td:first-child,
+#APPage .iTable td:first-child, #APPage .oTable td:first-child,
+#DPPage .iTable td:first-child, #DPPage .oTable td:first-child {
+	width: 60%;
+}
+
+#HoldPage .iTable td:first-child, #HoldPage .oTable td:first-child {
+	width: 160px;
+}
+
+#HoldPage .iTable td:nth-child(2), #HoldPage .oTable td:nth-child(2) {
+	white-space: normal;
+}
+
+#EmergPage .iTable td:first-child, #EmergPage .oTable td:first-child {
+	min-width: 150px;
+	width: 50%;
+}
+
+#RiskPage td:first-child {
+}
+
+#RiskPage td:nth-child(2) {
+	width: 23%;
+	text-align: center;
+}
+
+#RiskPage .iTable {
+}
+
+#ClearRiskButton {
+	min-width: 75px;
+}
+
+#EmergGlideTable table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+#EmergGlideTable tr {
+	border-top: 0;
+}
+
+#EmergGlideTable td {
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 3px;
+	padding-bottom: 4px;
+	height: 16px;
+	min-height: 16px;
+}
+
+#EmergGlideDist {
+	font-size: 18pt;
+}
+
+#RiskLow, #RiskMed, #RiskHigh, #RiskNG {
+	display: none;		/* turned on in computeRisk() */
+}
+
+#TOUPage .text p {
+	padding-left: 0px;
+}
+
+#editACButtons, #editTripButtons {
+	border-top: 0;		/* no border between buttons selector */
+}
+
+#editACButtons td, #editTripButtons td {
+	height: 28px;
+	padding: 2px 0px;
+}
+
+/*
+ * Style dialogs.
+ */
+#dialog-wrapper {
+	position: fixed;
+	z-index: 1000;
+	top: 0px;
+	left: 0px;
+	background-color: white;
+	border-radius: 8px;
+	border: 4px solid #B4B4B4;
+	padding: 4px;
+}
+
+#dialog-wrapper table {
+	width: 100%;
+	text-align: center;
+}
+#dialog-wrapper table td {
+	padding: 4px;
+}
+
+#dialog-text {
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+	max-width: 600px;
+	font-size: 12pt;
+	font-weight: normal;
+	margin: 4px;
+	text-align: left;
+}
+
+#dialog-text h1
+ {
+	font-size: 13pt;
+	font-weight: bold;
+}
+
+#dialog-text p {
+	margin-bottom: .5em;
+}
+
+#dialog-text ul {
+	margin-top: .5em;
+}
+
+.dialog-button {
+	min-width: 65px;
+	margin-top: 15px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 6px;
+	text-align: center;
+	display: block;
+}
+
+.smallDialog {
+	transform: scale(.3, .3);
+	-webkit-transform: scale(.3, .3);
+}
+
+.largeDialog {
+	transform: scale(1, 1);
+	-webkit-transform: scale(1, 1);
+	transition: transform 150ms linear;
+	-webkit-transition: -webkit-transform 150ms linear;
+}
+
+/*
+ * Style Help
+ */
+#HelpPage {
+	display: none;		/* turned on in showHelp() */
+	position: fixed;
+	top: 70px;
+	bottom: 20px;
+	left: 20px;
+	right:20px;
+	min-width: 728px;
+	z-index: 2;
+	background: rgb(172,172,193);
+}
+
+#HelpContent {
+	background-color: white;
+	border-radius: 8px;
+	margin: 8px;
+	margin-right: 8px;
+}
+
+#HelpTOC {
+	position: absolute;
+	left: 0px;
+	top: 43px;
+	bottom: 0px;
+	width: 245px;
+	overflow: auto;
+	padding: 10px;
+	background-color: white;
+	border-bottom: 5px solid #B4B4B4;
+	border-left: 5px solid #B4B4B4;
+	border-bottom-left-radius: 8px;
+}
+
+#HelpText {
+	position: absolute;
+	top: 43px;
+	bottom: 0px;
+	right: 0px;
+	left: 270px;
+	background-color: white;
+	border-right: 5px solid #B4B4B4;
+	border-bottom: 5px solid #B4B4B4;
+	border-left: 1px solid #B4B4B4;
+	border-bottom-right-radius: 8px;
+	overflow: auto;
+	padding: 10px;
+}
+
+.cRef {
+	text-decoration: underline;
+	color: blue;
+}
+
+.TOC {
+	padding: 4px;
+}
+
+/*
+ * Metar
+ */
+
+.Metar {
+	width: 100%;
+}
+
+.Metar td:first-child {
+	text-align: left;
+	width: 99% !important;
+}
+
+.Metar td:last-child {
+	text-align: center;
+	padding: 0px;
+}
+
+.Metar button {
+	height: 38px;
+	width: 38px;
+}
+
+#DepMetarText, #DestMetarText {
+	white-space: normal;
+	padding-left: 0px;
+	padding-right: 4px;
+}
+
+@-webkit-keyframes spin {
+	0%   {-webkit-transform: rotate(0deg)}
+	100% {-webkit-transform: rotate(360deg)}
+}
+
+/*
+ * Miscellaneous elements
+ */
+#AppState {
+	margin: 4px;
+	padding: 0px;
+	border-radius: 8px;
+	border: 1px solid #B4B4B4;
+	text-align: left;
+	-webkit-user-select: text;
+}
+
+#HoldCanvas {
+	width: 450px;
+	height: 450px;
+}
