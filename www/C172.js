@@ -209,9 +209,9 @@ var gInputDesc = {
 	EnrtReserve: {type:"o", def:"VFR"},
 	DestFlaps: {type:"o", def:"30"},
 	ACModel: {type:"o", def:"172S"},
-	ACBEW_lbs: {type:"n4.1", min:1400, max:2000, def:1626, sw:"?,?|?|?.|?|lbs."},
-	ACBEW_kg: {type:"n3.1", min:635, max:907, def:738, sw:"?|?|?.|?|kg."},
-	ACArm: {type:"n2.2", min:35, max:47.3, def:38.1, sw:"??.|?|?|in."},
+	ACBEW_lbs: {type:"n4.1", min:1100, max:2000, def:1626, sw:"?,?|?|?.|?|lbs."},
+	ACBEW_kg: {type:"n3.1", min:499, max:907, def:738, sw:"?|?|?.|?|kg."},
+	ACArm: {type:"n2.2", min:31, max:47.3, def:38.1, sw:"??.|?|?|in."},
 	ACLRTanks: {type:"c", def:true},
 	RiskFlightRules: {type:"o", def:"RiskIFR"},
 	RiskDepRwyCond: {type:"o", def:"RiskDepRwyDry"},
@@ -244,7 +244,64 @@ var gInputDesc = {
 	RiskFzRain: {type:"c", def:false},
 	RiskIcePirep: {type:"c", def:false},
 	RiskTS: {type:"c", def:false},
-	RiskAutoPilot: {type:"c", def:false}
+	RiskAutoPilot: {type:"c", def:false},
+	CheckTakeOff: {type:"Z", def:""},
+	CheckBStart:{same:"CheckTakeOff"},
+	CheckBEnd:{same:"CheckTakeOff"},
+	CheckPoint1:{type:"S7",def:""},
+	CheckCompHead1:{type:"n3", def:"360",min:0, max:360},
+	CheckDist1:{type:"n3", def:"0",min:0, max:"getIO('EnrtMaxRange')"},
+	CheckKIAS1:{type:"n3", def:"0",min:0, max:125},
+	CheckATA1: {type:"Z", def:""},
+	CheckPoint2:{same:"CheckPoint1"},
+	CheckCompHead2:{same:"CheckCompHead1"},
+	CheckDist2:{same:"CheckDist1"},
+	CheckKIAS2:{same:"CheckKIAS1"},
+	CheckATA2: {same:"CheckATA1"},
+	CheckPoint3:{same:"CheckPoint1"},
+	CheckCompHead3:{same:"CheckCompHead1"},
+	CheckDist3:{same:"CheckDist1"},
+	CheckKIAS3:{same:"CheckKIAS1"},
+	CheckATA3: {same:"CheckATA1"},
+	CheckPoint4:{same:"CheckPoint1"},
+	CheckCompHead4:{same:"CheckCompHead1"},
+	CheckDist4:{same:"CheckDist1"},
+	CheckKIAS4:{same:"CheckKIAS1"},
+	CheckATA4: {same:"CheckATA1"},
+        CheckPoint5:{same:"CheckPoint1"},
+	CheckCompHead5:{same:"CheckCompHead1"},
+	CheckDist5:{same:"CheckDist1"},
+	CheckKIAS5:{same:"CheckKIAS1"},
+	CheckATA5: {same:"CheckTakeOff"},
+	CheckPoint6:{same:"CheckPoint1"},
+	CheckCompHead6:{same:"CheckCompHead1"},
+	CheckDist6:{same:"CheckDist1"},
+	CheckKIAS6:{same:"CheckKIAS1"},
+	CheckATA6: {same:"CheckATA1"},
+	CheckPoint7:{same:"CheckPoint1"},
+	CheckCompHead7:{same:"CheckCompHead1"},
+	CheckDist7:{same:"CheckDist1"},
+	CheckKIAS7:{same:"CheckKIAS1"},
+	CheckATA7: {same:"CheckATA1"},
+	CheckPoint8:{same:"CheckPoint1"},
+	CheckCompHead8:{same:"CheckCompHead1"},
+	CheckDist8:{same:"CheckDist1"},
+	CheckKIAS8:{same:"CheckKIAS1"},
+	CheckATA8: {same:"CheckATA1"},
+        CheckPoint9:{same:"CheckPoint1"},
+	CheckCompHead9:{same:"CheckCompHead1"},
+	CheckDist9:{same:"CheckDist1"},
+	CheckKIAS9:{same:"CheckKIAS1"},
+	CheckATA9: {same:"CheckATA1"},
+        CheckPoint10:{same:"CheckPoint1"},
+	CheckCompHead10:{same:"CheckCompHead1"},
+	CheckDist10:{same:"CheckDist1"},
+	CheckKIAS10:{same:"CheckKIAS1"},
+	CheckATA10: {same:"CheckATA1"},
+        CheckIAF:{type:"c", def:false},
+        CheckName: {type:"s25", def:"Check", onchange:"checkCheckName()"},
+        SelectedCheck: {type:"O", def:"[Current]", page:"Check",onchange:"CheckResetTime()"}
+
 };
 
 /*
@@ -319,6 +376,8 @@ var gOutputDesc = {
 	TripFuelToDest_gal: {link:"EnrtFuelToDest_gal"},
 	TripFuelToDest_l: {link:"EnrtFuelToDest_l"},
 	TripEnrtDestDist: {link:"EnrtDestDist"},
+        TripWBBaggage2Max_lbs: {link:"WBBaggage2Max_lbs"},
+        TripWBBaggage2Max_kg: {link:"WBBaggage2Max_kg"},
 	WBFuelToDest_gal: {link:"EnrtFuelToDest_gal"},
 	WBFuelToDest_l: {link:"EnrtFuelToDest_l"},
 	DepRunwaysText: {type:"s"},
@@ -368,11 +427,15 @@ var gOutputDesc = {
 	WBFuelMax_gal: {type:"n2", color:"black"},
 	WBFuelUsedMax_gal: {link:"WBFuelMax_gal"},
 	WBMaxFuel_gal: {type:"n2d", invalid:"-"},
-	EnrtFuelToDest_gal: {type:"n2u", invalid:"poh", tableErrors:gPOHErrors.Enrt},
+        WBBaggage2Max_lbs: {type:"n2", color:"black"},
+        WBBaggage2Max_kg: {type:"n2", color:"black"},
+	EnrtFuelToDest_gal: {type:"n2.1", invalid:"poh", tableErrors:gPOHErrors.Enrt},
 	WBFuelToDest_gal: {link:"EnrtFuelToDest_gal"},
 	EnrtFuelAtDest_gal: {type:"n2d", invalid:"poh", tableErrors:gPOHErrors.Enrt},
 	EnrtFuelAtAlt_gal: {type:"n2d"},
 	EnrtAltResv_gal: {same:"EnrtFuelToDest_gal"},
+	EnrtClimbCruise_gal: {same:"EnrtFuelToDest_gal"},
+	EnrtClimbCruise_l: {same:"EnrtFuelToDest_gal"},	
 	WBFuelMax_l: {type:"n3", color:"black"},
 	WBFuelUsedMax_l: {link:"WBFuelMax_l"},
 	WBMaxFuel_l: {type:"n3d", invalid:"-"},
@@ -446,8 +509,8 @@ var gOutputDesc = {
 	EnrtGPH: {type:"n2.1m.1", invalid:"poh", tableErrors:gPOHErrors.Enrt},
 	EnrtPPH: {type:"n3", invalid:"-"},
 	EnrtEff: {type:"n2.1m.1", invalid:"-"},
-	EnrtClimbFuel_gal: {type:"n2", invalid:"poh", tableErrors:gPOHErrors.Enrt},
-	EnrtClimbFuel_l: {type:"n2", invalid:"poh", tableErrors:gPOHErrors.Enrt},
+	EnrtClimbFuel_gal: {type:"n2.1", invalid:"poh", tableErrors:gPOHErrors.Enrt},
+	EnrtClimbFuel_l: {type:"n2.1", invalid:"poh", tableErrors:gPOHErrors.Enrt},
 	EnrtClimbDist: {type:"n2", invalid:"poh", errID:"EnrtClimbDTError", tableErrors:gPOHErrors.Enrt},
 	EnrtClimbTime: {type:"t", invalid:"poh", errID:"EnrtClimbDTError", tableErrors:gPOHErrors.Enrt},
 	DestROC: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.Dest},
@@ -457,9 +520,62 @@ var gOutputDesc = {
 	DPAOC: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.DP},
 	DPAOCT: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.DP},
 	APMAROC: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.AP},
-	APMAAOC: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.AP},
+	APMAAOC: {type:"nd4", invalid:"poh", tableErrors:gPOHErrors.AP},
 	APMAAOCT: {type:"n4", invalid:"poh", tableErrors:gPOHErrors.AP},
-	EmergGlideDist: {type:"n3d", color:"red"}
+	EmergGlideDist: {type:"n3d", color:"red"},
+	CheckETE1: {type:"tz"},
+	CheckETA1: {type:"tz", color:"green"},
+	CheckFuel1: {type:"n2.1"},
+	CheckFuelRem1:{type:"n2.1"},
+	CheckETE2: {same:"CheckETE1"},
+	CheckETA2: {same:"CheckETA1"},
+	CheckFuel2: {same:"CheckFuel1"},
+	CheckFuelRem2:{same:"CheckFuelRem1"},
+	CheckETE3: {same:"CheckETE1"},
+	CheckETA3: {same:"CheckETA1"},
+	CheckFuel3: {same:"CheckFuel1"},
+	CheckFuelRem3:{same:"CheckFuelRem1"},
+	CheckETE4: {same:"CheckETE1"},
+	CheckETA4: {same:"CheckETA1"},
+	CheckFuel4: {same:"CheckFuel1"},
+	CheckFuelRem4:{same:"CheckFuelRem1"},
+        CheckETE5: {same:"CheckETE1"},
+	CheckETA5: {same:"CheckETA1"},
+	CheckFuel5: {same:"CheckFuel1"},
+	CheckFuelRem5:{same:"CheckFuelRem1"},
+	CheckETE6: {same:"CheckETE1"},
+	CheckETA6: {same:"CheckETA1"},
+	CheckFuel6: {same:"CheckFuel1"},
+	CheckFuelRem6:{same:"CheckFuelRem1"},
+	CheckETE7: {same:"CheckETE1"},
+	CheckETA7: {same:"CheckETA1"},
+	CheckFuel7: {same:"CheckFuel1"},
+	CheckFuelRem7:{same:"CheckFuelRem1"},
+	CheckETE8: {same:"CheckETE1"},
+	CheckETA8: {same:"CheckETA1"},
+	CheckFuel8: {same:"CheckFuel1"},
+	CheckFuelRem8:{same:"CheckFuelRem1"},
+        CheckETE9: {same:"CheckETE1"},
+	CheckETA9: {same:"CheckETA1"},
+	CheckFuel9: {same:"CheckFuel1"},
+	CheckFuelRem9:{same:"CheckFuelRem1"},
+        CheckETE10: {same:"CheckETE1"},
+	CheckETA10: {same:"CheckETA1"},
+	CheckFuel10: {same:"CheckFuel1"},
+	CheckFuelRem10:{same:"CheckFuelRem1"},
+        CheckTotalDist:{type:"n3",color:"black"},
+        CheckTotalETE: {type:"t",color:"black"},
+        CheckTotalATA: {type:"t",color:"black"},
+        CheckTotalFuelUsd:{type:"n2.1",color:"black"},
+        CheckTotalFuelRem:{same:"CheckTotalFuelUsd"},
+        CheckTOCDist:{link:"EnrtClimbDist"},
+        CheckTOCKias:{link:"DPVy"},
+        CheckTOCETE:{link:"EnrtClimbTime"},
+        CheckTOCFuelUsd:{link:"EnrtClimbFuel_gal"},
+        CheckTODDist:{same:"EnrtClimbDist"},
+        CheckTODKias:{same:"DPVy"},
+        CheckTODETE:{same:"EnrtClimbTime"},
+        CheckTODFuelUsd:{same:"EnrtClimbFuel_gal"}
 };
 
 /*
@@ -533,6 +649,36 @@ var gPageDesc = {
 		Home: {
 			name: "Home",
 			childPages: ["Trip", "WB", "Dep", "Enrt", "Dest", "Instr", "Emerg", "More"]
+		},
+		Check:{
+			name: "Enroute Checkpoints",
+			compute: [{
+				inputs: ["<page:Check;io:input>","CheckTakeOff","CheckBStart","CheckBEnd",
+                                "CheckPoint1","CheckCompHead1","CheckDist1","CheckKIAS1", "CheckATA1",
+				"CheckPoint2","CheckCompHead2","CheckDist2","CheckKIAS2", "CheckATA2",
+				"CheckPoint3","CheckCompHead3","CheckDist3","CheckKIAS3", "CheckATA3",
+				"CheckPoint4","CheckCompHead4","CheckDist4","CheckKIAS4", "CheckATA4",
+                                "CheckPoint5","CheckCompHead5","CheckDist5","CheckKIAS5", "CheckATA5",
+				"CheckPoint6","CheckCompHead6","CheckDist6","CheckKIAS6", "CheckATA6",
+				"CheckPoint7","CheckCompHead7","CheckDist7","CheckKIAS7", "CheckATA7",
+				"CheckPoint8","CheckCompHead8","CheckDist8","CheckKIAS8", "CheckATA8",
+                                "CheckPoint9","CheckCompHead9","CheckDist9","CheckKIAS9", "CheckATA9",
+                                "CheckPoint10","CheckCompHead10","CheckDist10","CheckKIAS10", "CheckATA10",
+                                "CheckName","SelectedCheck"],
+					outputs: ["<page:Check;io:output>",
+                                "CheckETE1","CheckETA1","CheckFuelRem1",
+				"CheckETE2","CheckETA2","CheckFuelRem2",
+				"CheckETE3","CheckETA3","CheckFuelRem3",
+				"CheckETE4","CheckETA4","CheckFuelRem4",
+                                "CheckETE5","CheckETA5","CheckFuelRem5",
+				"CheckETE6","CheckETA6","CheckFuelRem6",
+				"CheckETE7","CheckETA7","CheckFuelRem7",
+				"CheckETE8","CheckETA8","CheckFuelRem8",
+                                "CheckTOCDist","CheckTOCKias","CheckTOCETE","CheckTOCFuelUsd",
+                                "CheckTODDist","CheckTODKias","CheckTODETE","CheckTODFuelUsd",
+                                "CheckTotalDist","CheckTotalETE","CheckTotalATA","CheckTotalFuelUsd","CheckTotalFuelRem"],
+					fn: computeCheckpoints
+			}]
 		},
 		Trip: {
 			name: "Trips",
@@ -772,6 +918,7 @@ function computeWB () {
 	var bew = getIO("ACBEW_lbs");
 	var bewArm = getIO("ACArm");
 	var fuelData = getACData("WBFuel");
+        var bagg2Data = getACData("WBBaggage2");
 	var zfWeight = 0;
 	var zfMoment = 0;
 	var id, baseID, WBIds;
@@ -782,6 +929,7 @@ function computeWB () {
 		fuelData = getACData("WBFuelLR");
 	}
 	setOutput("WBFuelMax_gal", fuelData.max);
+        setOutput("WBBaggage2Max_lbs", bagg2Data.max);
 	// Go through all the weight related input entries, validate them and compute
 	// a cumulative weight and moment.
 	WBIds = getIdList("<page:WB;io:input>");
@@ -1023,6 +1171,11 @@ function drawWB (toCG, toWeight, ldgCG, ldgWeight, zfCG, zfWeight) {
 		a = Math.min(Math.max(a, left), right);
 		return (canvas.width * (a - left)/(right - left));
 	};
+        
+        if (isACModel("150M")){
+            left=30;
+            right=41;
+        }
 
 	// Get the drawing context, if supported and clear the canvas.
 	if (canvas.getContext == undefined) {
@@ -1447,6 +1600,152 @@ function computeDeparture () {
 			: ";"+arpt+" "+rwy.rwyID+": "+fmtNum(rwy.rwyLength)+" ft.")
 	);
 }
+/*
+ * Compute computeCheckpoints.
+ */
+function computeCheckpoints(){
+	
+	var TakeOff,CheckATA,tmpTime,tmpTime1,FuelClimb;
+        var DistClimb,FuelFlowCruise,TimeClimb,ClimbRem;
+        var CruiseAlt,DestAlt,IAFAlt;
+	TripDist=0,TripETE=0,TripETEFuel=0,TripFuel=0;
+	CheckETE=0,CheckETA=0,CheckFuel=0,tmpDist=0,TotalFuel=0,TotalETE=0,TotalATA=0;
+        TODDist=0,TODETE=0,TODFuelUsed=0,TODGS=0;
+        
+
+	var Calculations =function (tmp,i){
+		
+		var CheckDist,CheckGS;
+		var dummy1,dummy2,dummy3,dummy4,dummy5,dummy6,dummy7;
+                var tmpETE,tmpDist;
+
+		dummy1 = "CheckDist"+i;
+   		dummy2 = "CheckKIAS"+i;
+   		dummy3 = "CheckATA"+i;
+   		dummy4 = "CheckETE"+i;
+   		dummy5 = "CheckETA"+i;
+   		dummy6 = "CheckFuel"+i;
+   		dummy7 = "CheckFuelRem"+i;
+   	
+   		CheckDist = getIO(dummy1);
+   		CheckGS = getIO(dummy2);
+
+		if (CheckDist!=0 && CheckGS!=0 && tmp!=null) {
+   			//Time calculations
+                        TODGS = CheckGS;
+   			CheckETE = round(CheckDist/(CheckGS/60));
+			TripETE+=CheckETE;
+                        TotalETE+=CheckETE;    
+                            
+   			CheckETA = (parseInt(tmp[0])*60) +parseInt(tmp[1])+TripETE;
+   			
+   			setOutput(dummy4,round(CheckETE));
+   			setOutput(dummy5,CheckETA);
+
+			if (CheckDist>0) {
+                            if (ClimbRem){
+                                DistClimb-=CheckDist;
+                                if (DistClimb<0){
+                                    ClimbRem=false;
+                                }
+                            }
+                            
+                            //Fuel calculations
+                            if (ClimbRem){
+                                CheckFuel = CheckETE*FuelClimb/TimeClimb;
+                            }
+                            else{
+                                if (DistClimb<0){
+                                    tmpETE = round(DistClimb*(-1)/(CheckGS/60));
+                                    CheckFuel = CheckETE*FuelFlowCruise/60;
+                                    tmpDist = CheckDist + DistClimb;
+                                    tmpETE = round(tmpDist/(CheckGS/60));
+                                    CheckFuel += (tmpETE*FuelClimb/TimeClimb);
+                                    DistClimb = 0;
+                                }
+                                else {
+                                    CheckFuel = CheckETE*FuelFlowCruise/60;
+                                }
+                            }
+	
+                            TripFuel+=CheckFuel;
+                            TotalFuel-=CheckFuel;
+				
+                            //Set fuel 
+                            setOutput(dummy6,CheckFuel);
+                            setOutput(dummy7,TotalFuel);
+                            
+			}
+		}
+	};
+        
+	computeCheck();
+        
+        TakeOff = getIO("CheckTakeOff");        
+	TotalFuel = getIO("WBFuel_gal");
+	FuelClimb = getIO("EnrtClimbFuel_gal");
+   	DistClimb = getIO("EnrtClimbDist");
+   	FuelFlowCruise = getIO("EnrtGPH");
+        TimeClimb = getIO("EnrtClimbTime");
+        CruiseAlt = getIO("EnrtAltH");
+        DestAlt = getIO("DestAlt");
+        
+        ClimbRem = true;
+
+	for (i=1;i<=CHKROWS;i++) {
+            
+                //sumarize total trip distance
+                TripDist +=	getIO("CheckDist"+i);
+                
+		if (i==1) {
+			if (TakeOff!="") {
+				tmpTime = TakeOff.split(":");
+				Calculations(tmpTime,i);
+			}
+		}
+		else{
+			var prevrow = i-1;
+			CheckATA = getIO("CheckATA"+prevrow);
+			if (CheckATA!="") {
+                                tmpTime1 = tmpTime;
+				tmpTime = CheckATA.split(":");
+				TripETE =0;
+                                if (tmpTime!=null && tmpTime1!=null){
+                                    TotalATA += ((parseInt(tmpTime[0])*60) +parseInt(tmpTime[1])) - ((parseInt(tmpTime1[0])*60) +parseInt(tmpTime1[1]));
+                                }	
+                                Calculations(tmpTime,i);
+			}
+			else{
+				Calculations(tmpTime,i);
+				
+			}
+			
+		}
+                //Set Totals
+                setOutput("CheckTotalDist",TripDist);
+                setOutput("CheckTotalETE",TotalETE);
+                setOutput("CheckTotalATA",TotalATA);
+                setOutput("CheckTotalFuelUsd",TripFuel);
+                setOutput("CheckTotalFuelRem",TotalFuel);
+                
+                
+	}
+    //Set TOC, Cruise, TOD
+    if (getIO("CheckIAF")) {
+        IAFAlt = getIO("APCold1");
+	}
+    else{
+        IAFAlt = DestAlt+1000;
+    }
+        
+    TODETE = round(((CruiseAlt*100)-(IAFAlt))/500,1);
+    TODDist = round(TODETE*(TODGS/60),1);
+    TODFuelUsed = round(TODETE*FuelFlowCruise/60,1);
+    setOutput("CheckTODDist",TODDist);
+    setOutput("CheckTODKias",TODGS);
+    setOutput("CheckTODETE",TODETE);
+    setOutput("CheckTODFuelUsd",TODFuelUsed);
+}
 
 /*
  * Compute cruise results.
@@ -1528,9 +1827,9 @@ function computeEnroute () {
 	climbdist -= interpolateTable("ClimbDist", deppa) * (1 + (isa > 0? isa * .01: 0));
 	climbtime = interpolateTable("ClimbTime", cruisepa) * (1 + (isa > 0? isa * .01: 0));
 	climbtime -= interpolateTable("ClimbTime", deppa) * (1 + (isa > 0? isa * .01: 0));
-	climbfuel += 1.4;		// taxi + takeoff
+	climbfuel += getACData("WBTaxiFuel");		// taxi + takeoff
 	climbdist += climbtime/60 * wind;			// factor in wind
-	setPOHOutput("EnrtClimbFuel_gal", round(climbfuel), null, "ClimbFuel");
+	setPOHOutput("EnrtClimbFuel_gal", round(climbfuel,1), null, "ClimbFuel");
 	setPOHOutput("EnrtClimbTime", round(climbtime), null, "ClimbTime");
 	setPOHOutput("EnrtClimbDist", round(climbdist), null, "ClimbDist");
 	if (!isValid(climbfuel, climbtime, climbdist)) {
@@ -1611,6 +1910,7 @@ function computeEnroute () {
 			time = (dist - climbdist) / ((cruisetas + wind) / 60);
 			setPOHOutput("EnrtETE", time + climbtime)
 			fuel = time * cruisegph / 60;
+			setPOHOutput("EnrtClimbCruise_gal", fuel);
 			fuel = Math.min(fuel, cruisefuel);		// fuel to dist doesn't always match range computation
 			fuelUsed = fuel + climbfuel + getACData("WBTaxiFuel");
 			setPOHOutput("EnrtFuelToDest_gal", fuelUsed);
@@ -2059,7 +2359,8 @@ function computeAC () {
 	} else if (changedIO("SelectedAC")) {
 		// The current selected aircraft changed
 		setPageFromAircraft();
-		setACModel();
+                setACModel();
+                computeTrip();
 		if (getIO("TripSelectedAC") != "[Any]") {
 			setupInput("TripSelectedAC", getIO("SelectedAC"));
 		}
@@ -2656,6 +2957,9 @@ function buildAircraftData () {
 	buildIASTable(gACData.model["172N"], "0");
 	buildIASTable(gACData.model["172N"], "10");
 	buildIASTable(gACData.model["172N"], "30");
+        buildIASTable(gACData.model["150M"], "0");
+	buildIASTable(gACData.model["150M"], "10");
+	buildIASTable(gACData.model["150M"], "30");
 }
 
 /*

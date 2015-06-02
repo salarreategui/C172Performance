@@ -7,6 +7,17 @@
 /*
  * Initial setup on page load.
  */
+/* global getElt */
+var BS = "CheckBStart";
+var BE = "CheckBEnd";
+var TOF = "CheckTakeOff";
+var ATA = "CheckATA";
+
+var CHKROWS = 10;						// number of checkpoints rows
+var CheckNextEvent = BS;
+var CheckRow =1;
+var CheckEndFlight = false;
+
 function setup (pageDesc, inputDesc, outputDesc) {
 	if (gUI.style != "small") {
 		setupScale(768);		// make sure the non-small devices are scaled to >=768px in all orientations
@@ -1329,6 +1340,409 @@ function checkTOU () {
 }
 
 /****
+ * Checkpoints page functions
+ ****/
+function CheckReset(type){
+	
+        dialog.confirm("Reset " +type+ " data?",
+		function (yes) {
+			if (yes) {
+                            //Set time fields to default
+                            CheckNextEvent = BS;
+                            CheckRow =1;
+                            CheckEndFlight = false;
+                            
+                            setInput(TOF,"");
+                            getElt(getCurrentUnitsID(TOF)).disabled = false;
+                            setInput(BS,"");
+                            getElt(getCurrentUnitsID(BS)).disabled = false;
+                            setInput(BE,"");
+                            getElt(getCurrentUnitsID(BE)).disabled = false;
+                            for (var i=1;i<=CHKROWS;i++) {
+                                    setInput(ATA+i,"");
+                                    //getElt(getCurrentUnitsID(ATA+i)).value ="";
+                                    getElt(getCurrentUnitsID(ATA+i)).disabled = false;
+                                    if (type=="All"){
+                                        setInput("CheckPoint"+i,"");
+                                        setInput("CheckCompHead"+i,"360");
+                                        setInput("CheckDist"+i,"0");
+                                        setInput("CheckKIAS"+i,"0");
+                                        setupInput("SelectedCheck", "[Current]");
+                                    }
+                            }
+                        }
+                    }
+                );
+	
+}
+/*
+ * Show page-specific Checkpoints.
+ */
+function showCheck (id) {
+    
+    var nextrow;
+	// Show the check page.
+	showElt(id, true);
+//        showElt("CheckName",false);
+//        showElt("editCheckButton",false);
+        selectCheck();
+        //cickable button set status
+
+        if (getElt(getCurrentUnitsID(BS)).value!=""){
+            getElt(getCurrentUnitsID(BS)).disabled = true;
+            CheckNextEvent = TOF;
+        }
+
+        if (getElt(getCurrentUnitsID(TOF)).value!=""){
+            getElt(getCurrentUnitsID(TOF)).disabled = true;
+            CheckNextEvent = ATA+1;
+            CheckRow=2;
+        }
+        for (i=1;i<=CHKROWS;i++){
+            nextrow=i+1;
+            if(getElt(getCurrentUnitsID(ATA+i)).value!=""){
+                getElt(getCurrentUnitsID(ATA+i)).disabled = true;
+                CheckNextEvent = ATA+CheckRow;
+                CheckRow+=1;
+            }
+            
+        }
+        if (getElt(getCurrentUnitsID(BE)).value!=""){
+            CheckRow = CHKROWS+1;
+            CheckNextEvent = ATA+CheckRow;
+            getElt(getCurrentUnitsID(BE)).disabled = true;
+        }
+        
+}
+/*
+ * Called to exit the help system.
+ */
+function CheckDone () {
+	showElt("CheckPage", false);			// turn off the check page
+}
+/*
+ * Format time.
+ */
+function pad(n, width, z) {
+		  z = z || '0';
+		  n = n + '';
+		  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+		};
+/*
+ * Set actual time in UTC.
+ */
+function SetCheckUTCTime(id){
+	//set time in UTC
+	var d= new Date(); 
+	var h = pad(d.getUTCHours(),2);
+    var m = pad(d.getUTCMinutes(),2);
+	var time;
+        
+
+    time = h + ":" + m;
+        if (id==BE){
+            if (CheckEndFlight){
+                dialog.confirm("End of Flight?",
+		function (yes) {
+			if (yes) {
+                            CheckRow = CHKROWS+1;
+                            CheckNextEvent = ATA+CheckRow;
+                            setInput (id, time);
+                            getElt(getCurrentUnitsID(id)).disabled = true;
+                        }
+                    }
+                );
+            }
+        }
+    
+	if (id==CheckNextEvent) {
+            
+            if (id==BS){
+                CheckNextEvent = TOF;
+            }
+            else{
+                CheckNextEvent = ATA+CheckRow;
+                CheckRow+=1;
+                CheckEndFlight = true;
+            }
+            setInput (id, time);
+            getElt(getCurrentUnitsID(id)).disabled = true;
+            
+	}
+
+
+}
+///*
+// * Create a new check. Called from new check button.
+// */
+function newCheck () {
+	var check;
+	var checkName;
+	var i;
+
+	// Make sure there are non-default aircraft
+	if (gIO.aircraft.length == 0) {
+		notice("Cannot create check without any aircraft. Please create an aircraft on the Aircraft page.");
+		return;
+	}
+        //show name and done button
+        showElt("CheckName",true);
+        showElt("editCheckButton",true);
+	// Create a check with a unique name
+	check = {};
+	checkName = getIO("SelectedTrip");
+        
+        if (checkName == "[Current]"){
+            checkName = "ENROUTE CHECKPOINTS"
+        }
+	// if the default check name already exists, find a unique number to add to the end of the name
+	if (findCheckIndex(checkName) >= 0) {
+		for (i = 0; i <= gIO.checks.length; i++) {
+			if (findCheckIndex(checkName+" "+(i+1)) < 0) {
+				break;
+			}
+		}
+		checkName = checkName + " " + (i+1);
+	}
+	check["checkName"] = checkName;
+	setupInput("CheckName", checkName);	// setup new check name
+        gIO.checks.push(check);
+        setCheckFromPage(gIO.checks.length - 1);
+        gIO.checks.sort(function (a, b) {
+                return (a["CheckName"] < b["CheckName"]? -1: (a["CheckName"] > b["CheckName"]? 1: 0));
+        });
+        setCheckOptions(checkName);
+        selectCheck();
+        editCheck(true);
+//        computePage("Check");
+        saveInput();						// save it
+}
+
+/*
+ * Load checks page values into the selected check.
+ */
+function setCheckFromPage (index) {
+	var id, ids;
+	var check = {};
+
+	assert(index >= 0 && index < gIO.checks.length, "setCheckFromPage: check not open");
+	// Create a new check object that contains only inputs in current units
+	ids = getIdList("<page:Check;io:input>");
+	for (id in ids) {
+		if (id != "SelectedCheck") {
+			// Load the value into the check
+                        if (id.indexOf("CheckPoint")>=0||id.indexOf("CheckCompHead")>=0||id.indexOf("CheckDist")>=0||id.indexOf("CheckKIAS")>=0||id.indexOf("CheckName")>=0){
+                            check[id] = (isValidIO(id)? getIO(id): inputDefault(id));
+                        }
+			
+		}
+	}
+	// save check units
+	gIO.checks[index] = check;
+}
+
+/*
+ * Find the index in the gIO.checks array of the check name.
+ */
+function findCheckIndex (checkName) {
+	var i;
+
+	if (checkName != "[Current]") {
+		for (i = 0; i < gIO.checks.length; i++) {
+			if (gIO.checks[i]["CheckName"] == checkName) {
+				return (i);
+			}
+		}
+	}
+	return (-1);
+}
+/*
+ * Sort the checks by name, setup the check options list and setup the selected check.
+ */
+function setCheckOptions (checkName) {
+	var i;
+
+	clearOptions("SelectedCheck");
+	addOption("SelectedCheck", "[Current]");
+	for (i = 0; i < gIO.checks.length; i++) {
+		addOption("SelectedCheck", gIO.checks[i]["CheckName"]);
+	}
+	setupInput("SelectedCheck", checkName);
+}
+
+/*
+ * Select a check.
+ * For stored checks, the check values are loaded into the equivalent app fields.
+ * If the "[Current]" check is selected, pull the app info io the check fields.
+ */
+function selectCheck () {
+	var selectedCheck = getIO("SelectedCheck");
+	var i;
+
+	if (selectedCheck == "[Current]") {
+		editCheck(true);
+		setupInput("CheckName", "[Current]");		// just in case
+		gIO.checkOpen = -1;
+	} else {
+		i = findCheckIndex(selectedCheck);
+		assert(i >= 0, "selectCheck: can't find check: "+selectedCheck);
+		if (gIO.checkOpen != i) {
+			gIO.checkOpen = i;
+			editCheck(false);
+			setPageFromCheck(gIO.checkOpen);
+//			setupInput("EnrtTempType", "ISA");
+//			setupInput("EnrtOAT", inputDefault("EnrtOAT"));
+//			setupInput("EnrtWind", inputDefault("EnrtWind"));
+//			computePage("AC");		// setup any new aircraft
+//			computePage("Enrt");	// recompute fuel usage and route distance
+		}
+	}
+//	computeHeader();
+}
+
+/*
+ * Make the selected check fields editable or not.
+ */
+function editCheck (editable) {
+	var id,ids;
+	var selCurrent = (getIO("SelectedCheck") == "[Current]");
+
+	if (selCurrent) {
+		editable = true;	// [Current] is always editable
+	} else if (editable == undefined) {
+		// If editable is not given, then toggle it. This form is called from the "Edit/Done" button.
+		editable = !gIO.checkEditable;
+	}
+	gIO.checkEditable = editable;
+	// Set field disabled property based in editability.
+        ids = getIdList("<page:Check;io:input>");
+	for (id in ids) {
+            // Load the value into the check
+            if (id.indexOf("CheckPoint")>=0||id.indexOf("CheckCompHead")>=0||id.indexOf("CheckDist")>=0||id.indexOf("CheckKIAS")>=0){
+                getElt(id).disabled = !editable;
+            }	
+	}
+//	getElt("CheckSelectedAC").disabled = !editable;
+	getElt("CheckName").disabled = !editable;
+	getElt("SelectedCheck").disabled = (!selCurrent && editable);
+	if (selCurrent) {
+		// Don't show check name field of edit button for "[Current]" check.
+		showElt("CheckName", false);
+		showElt("editCheckButton", false);
+	} else {
+		// Show check name field if editable. Show edit button and change it to "Done" if editable.
+		showElt("CheckName", editable);
+                getElt("editCheckButton").innerHTML = (editable? "Done": "Edit");
+		showElt("editCheckButton", true);
+                showElt("addCheckButton", !editable);
+                showElt("delCheckButton", !editable);
+	}
+}
+
+/*
+ * Load the selected check into the Checks page inputs.
+ */
+function setPageFromCheck (index) {
+	var id;
+	var check;
+
+	assert(index >= 0 && index < gIO.checks.length, "setPageFromCheck: check not open");
+	check = gIO.checks[index];
+	for (id in check) {
+		setupInput(id, check[id]);		// converts to current units, if required
+		setIOValidationError(id);		// set any validation error on current units
+	}
+}
+
+/*
+ * Set the app values from the check, if applicable
+ */
+function computeCheck () {
+//	var id;
+//	var selectedCheck = getIO("SelectedCheck");
+	
+//	if (changedIO("CheckSelectedAC") && getIO("CheckSelectedAC") != "[Any]") {
+//		setupInput("SelectedAC", getIO("CheckSelectedAC"));
+//	}
+	if (gIO.checkOpen >= 0 && gIO.checkEditable) {
+		// record check inputs, if one is selected
+		setCheckFromPage(gIO.checkOpen);
+		setCheckOptions(getIO("CheckName"));
+//	} else if (gIO.checkOpen >= 0 && getIO("CheckName") == getIO("SelectedCheck")) {
+//		// there's a non-editable open check where the page no longer matches the check.
+//		// set it back to "[Current]" to indicate that the app no longer reflects that check
+//		setupInput("SelectedCheck", "[Current]");
+//		selectCheck();
+	} else {
+		selectCheck();
+	}
+//	computePage("Enrt");			// recalculate fuel usage based on TO weight
+}
+
+/*
+ * Check the check name.
+ * Make sure the new name is not null and is does not already exist.
+ */
+function checkCheckName () {
+	var checkName = getIO("CheckName");
+	var selectedCheck = getIO("SelectedCheck");
+
+	if (checkName == selectedCheck) {
+		return;
+	}
+	assert(gIO.checkEditable, "checkCheckName: check not editable");
+	assert(selectedCheck != "[Current]", "checkCheckName: check can't be [CUrrent]");
+	if (checkName.length == 0) {
+		notice("Checkpoint name cannot be null");
+		setupInput("CheckName", selectedCheck);	// set it back
+		return;
+	}
+	if (findCheckIndex(checkName) >= 0) {
+		notice("Checkpoint name already exists");
+		setupInput("CheckName", selectedCheck);	// set it back
+		return;
+	}
+}
+
+/*
+ * Delete the selected check. Called from check delete button
+ */
+function deleteCheck () {
+	var selectedCheck = getIO("SelectedCheck");
+	var i = findCheckIndex(selectedCheck);
+
+	if (selectedCheck == "[Current]") {
+		notice("Cannot delete [Current] checkpoint");
+		return;
+	}
+	// Confirm the deletion, delete it then select the "[Current]" check.
+	dialog.confirm("Delete checkpoint: " + gIO.checks[i]["CheckName"] + "?",
+		function (yes) {
+			if (yes) {
+				gIO.checks.splice(i, 1);
+				setCheckOptions("[Current]");
+				selectCheck();
+				computePage("Check");
+				saveInput();
+			}
+		}
+	);
+}
+
+/*
+ * Verify timestamp fields to reset it when selected checkpoint value changed
+ */
+function CheckResetTime () {
+	var bs = getIO(BS);
+        
+	if (bs != "") {
+		CheckReset('Time');
+	}
+	
+}
+
+
+/****
  * Help page functions
  ****/
 
@@ -2370,7 +2784,6 @@ function setPageFromAircraft (ACReg) {
 		setupInput(id, aircraft[id]);		// converts to current units, if required
 		setIOValidationError(id);			// set any validation error on current units
 	}
-	computeTrip();
 }
 
 /*

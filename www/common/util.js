@@ -263,6 +263,17 @@ function roundDownMult (value, mult) {
 function roundMult (value, mult) {
 	return (round(Math.round(value / mult) * mult, _findDigits(mult)));
 }
+function roundZTime (value) {
+	var ztime;
+	if (value>=1440) {
+		ztime=((value/60)-24)*60;
+	}
+	else{
+		ztime=value;
+	}
+	return ztime;
+
+}
 
 /*
  * Log base 10.
@@ -1510,4 +1521,3 @@ logMsg("ajax.call: send: "+url+'?'+parms);
 		}
 	},
 };
-

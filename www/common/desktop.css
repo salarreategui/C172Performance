@@ -753,6 +753,22 @@ input.S7 {
 }
 
 /*
+ * Style CheckPage
+ */
+#CheckPage {
+	display: none;		/* turned on in showHelp() */
+	position: fixed;
+	top: 70px;
+	bottom: 20px;
+	left: 20px;
+	right:20px;
+	min-width: 728px;
+	z-index: 2;
+	background: rgb(172,172,193);
+        overflow: auto;
+}
+
+/*
  * Style Help
  */
 #HelpPage {

@@ -43,6 +43,9 @@ var gIO = {
 	aircraft: null,				// saved aircraft
 	aircraftEditable: false,	// indicates aircraft page is editable
 	trips: null,				// saved trips
+        checks:null,
+        checkOpen: -1,
+        checkEditable: false,
 	tripEditable: false,		// indicates trips page is editable
 	tripOpen: -1,				// index of the open trip
 	tripIDs: null,				// precomputed list of element IDs that are in a trip
@@ -971,7 +974,7 @@ function setOutput (id, value, fmt) {
 		assert(io && !io.input, "setOutput(): bad id: " + id);
 		// if the id is not in current units, convert value and use proper id
 		// Parse the type in the descriptor
-		m = io.desc.type.match(/([nst])(\d*\.?\d*)?(?:m(\d+\.?\d*))?([ud])?/);
+		m = io.desc.type.match(/([nst])(\d*\.?\d*)?(?:m(\d+\.?\d*))?([udz])?/);
 		assert(m != null, "setOutput(): bad type for id: " + id);
 		type = m[1];		// value type, "n":number, "p":POH number, "t":time, "s":string
 		width= m[2];		// field width: left.right
@@ -1034,6 +1037,9 @@ function setOutput (id, value, fmt) {
 					break;
 				case "d":
 					value = roundDownMult(value, mult);
+					break;
+				case "z":
+					value = roundZTime(value);
 					break;
 				default:		// rnd undefined
 					value = roundMult(value, mult);
@@ -2060,6 +2066,8 @@ function validateInput (id, value) {
 		break;
 	case "T":
 		break;
+	case "Z":
+		break;
 	default:
 		assert(false, "validateInput: bad input descriptor id=" + id + " type=" + type);
 		value = INVALID;
@@ -2346,6 +2354,7 @@ function getInputState () {
 	// Add aircraft and trips.
 	inputState["Aircraft"] = gIO.aircraft;
 	inputState["Trips"] = gIO.trips;
+        inputState["Checks"] = gIO.checks;
 	return (inputState);
 }
 
@@ -2374,7 +2383,7 @@ function setInputState (inputState) {
 	var id, tid;
 	var value;
 	var ac, inputAC;
-	var trip, inputTrip;
+	var trip, inputTrip,check,inputCheck;
 	var name;
 	var io;
 	var unitIDs = uList("SetAltimeterUnits", "SetRunwayUnits", "SetFuelUnits", "SetWeightUnits");
@@ -2404,6 +2413,10 @@ function setInputState (inputState) {
 	gIO.trips = [];
 	setTripOptions("[Current]");
 	selectTrip();
+        delete (gIO.checks);
+	gIO.checks = [];
+        setCheckOptions("[Current]");
+        selectCheck();
 	// initialize airports, runway selector and airport data
 	setupInput("DepArpt", inputDefault("DepArpt"));
 	setAirportIO("Dep", true);
@@ -2427,6 +2440,7 @@ function setInputState (inputState) {
 		case "AgentPlatform":
 		case "AgentProps":
 		case "Aircraft":
+                case "Checks":
 		case "Trips":
 			continue;		// skip
 		default:
@@ -2578,6 +2592,42 @@ function setInputState (inputState) {
 			gIO.trips.push(trip);			// add the new trip
 		}
 	}
+        
+        // Set up the saved checks, making sure that the saved ids in the checks are still valid.
+	if (typeOf(inputState["Checks"]) == "array") {
+		for (i = 0; i < inputState["Checks"].length; i++) {
+			inputCheck = inputState["Checks"][i];
+			// skip malformed structures
+			if (!inputCheck || typeOf(inputCheck) != "object") {
+				logMsg("setInputState: invalid check object in inputState");
+				continue;
+			}
+			// If the check doesn't have a valid check name or it already exists, skip it.
+			if (!("CheckName" in inputCheck)) {
+				logMsg("setInputState: aircraft object in inputState does not contain CheckName");
+				continue;
+			}
+			name = inputCheck["CheckName"];
+			if (typeof (name) != "string" || name.length == 0 || name == "[Current]" || findCheckIndex(name) >= 0) {
+				logMsg("setInputState: invalid check name in inputState:"+name);
+				continue;
+			}
+			// setup the elements in a new check in the units it was originally defined
+			check = {};
+			ids = getIdList("<page:Check;io:input>");
+			ids.remove("SelectedCheck");
+			for (id in ids) {
+				if (id in inputCheck && isValid(validateInput(id, inputCheck[id]))) {
+					check[id] = inputCheck[id];
+				}
+			}
+			gIO.checks.push(check);			// add the new Check
+		}
+	}
+        // Set the selected check if the one in inputState is OK
+        setCheckOptions(i >= 0? inputState["SelectedCheck"]: "[Current]");
+	selectCheck();
+        
 	// Set the selected trip if the one in inputState is OK. Otherwise use the default.
 	i = ("SelectedTrip" in inputState? findTripIndex(inputState["SelectedTrip"]): -1);
 	setTripOptions(i >= 0? inputState["SelectedTrip"]: "[Current]");
