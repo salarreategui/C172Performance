@@ -248,10 +248,10 @@ var gInputDesc = {
 	CheckTakeOff: {type:"Z", def:""},
 	CheckBStart:{same:"CheckTakeOff"},
 	CheckBEnd:{same:"CheckTakeOff"},
-	CheckPoint1:{type:"S7",def:""},
-	CheckCompHead1:{type:"n3", def:"360",min:0, max:360},
-	CheckDist1:{type:"n3", def:"0",min:0, max:"getIO('EnrtMaxRange')"},
-	CheckKIAS1:{type:"n3", def:"0",min:0, max:125},
+	CheckPoint1:{type:"S15",def:""},
+	CheckCompHead1:{type:"n3h", def:"360",min:0, max:360,sw:"?|?|?| °"},
+	CheckDist1:{type:"n3", def:"0",min:0, max:"getIO('EnrtMaxRange')",sw:"?|?|?|nm."},
+	CheckKIAS1:{type:"n3", def:"0",min:0, max:125,sw:"?|?|?|kt."},
 	CheckATA1: {type:"Z", def:""},
 	CheckPoint2:{same:"CheckPoint1"},
 	CheckCompHead2:{same:"CheckCompHead1"},
@@ -300,8 +300,9 @@ var gInputDesc = {
 	CheckATA10: {same:"CheckATA1"},
         CheckIAF:{type:"c", def:false},
         CheckName: {type:"s25", def:"Check", onchange:"checkCheckName()"},
-        SelectedCheck: {type:"O", def:"[Current]", page:"Check",onchange:"CheckResetTime()"}
-
+        SelectedCheck: {type:"O", def:"[Current]", page:"Check",onchange:"CheckResetTime()"},
+        CheckIAFAlt:{type:"n3", def:"getIO('EnrtAltH')",min:0,max:"getIO('EnrtAltH')"},
+        SetMinCheckATA:{type:"n2", def:1,min:0,max:5,local:true}
 };
 
 /*
@@ -575,7 +576,8 @@ var gOutputDesc = {
         CheckTODDist:{same:"EnrtClimbDist"},
         CheckTODKias:{same:"DPVy"},
         CheckTODETE:{same:"EnrtClimbTime"},
-        CheckTODFuelUsd:{same:"EnrtClimbFuel_gal"}
+        CheckTODFuelUsd:{same:"CheckFuel1"},
+        CheckVersion:{type:"s6",color:"black"}
 };
 
 /*
@@ -664,7 +666,7 @@ var gPageDesc = {
 				"CheckPoint8","CheckCompHead8","CheckDist8","CheckKIAS8", "CheckATA8",
                                 "CheckPoint9","CheckCompHead9","CheckDist9","CheckKIAS9", "CheckATA9",
                                 "CheckPoint10","CheckCompHead10","CheckDist10","CheckKIAS10", "CheckATA10",
-                                "CheckName","SelectedCheck"],
+                                "CheckName","SelectedCheck","CheckIAFAlt"],
 					outputs: ["<page:Check;io:output>",
                                 "CheckETE1","CheckETA1","CheckFuelRem1",
 				"CheckETE2","CheckETA2","CheckFuelRem2",
@@ -1608,76 +1610,93 @@ function computeCheckpoints(){
 	var TakeOff,CheckATA,tmpTime,tmpTime1,FuelClimb;
         var DistClimb,FuelFlowCruise,TimeClimb,ClimbRem;
         var CruiseAlt,DestAlt,IAFAlt;
+        var CheckDist,CheckGS;
+        var selectedCheck = getIO("SelectedCheck");
+        var version = "v.1.0.1";
+        
+        
 	TripDist=0,TripETE=0,TripETEFuel=0,TripFuel=0;
 	CheckETE=0,CheckETA=0,CheckFuel=0,tmpDist=0,TotalFuel=0,TotalETE=0,TotalATA=0;
         TODDist=0,TODETE=0,TODFuelUsed=0,TODGS=0;
         
+        var calcPlannedTimeFuel =function (i){
+            
+            //Time calculations
 
-	var Calculations =function (tmp,i){
-		
-		var CheckDist,CheckGS;
-		var dummy1,dummy2,dummy3,dummy4,dummy5,dummy6,dummy7;
-                var tmpETE,tmpDist;
+            CheckDist = getIO("CheckDist"+i);
+            CheckGS = getIO("CheckKIAS"+i);
+            
 
-		dummy1 = "CheckDist"+i;
-   		dummy2 = "CheckKIAS"+i;
-   		dummy3 = "CheckATA"+i;
-   		dummy4 = "CheckETE"+i;
-   		dummy5 = "CheckETA"+i;
-   		dummy6 = "CheckFuel"+i;
-   		dummy7 = "CheckFuelRem"+i;
-   	
-   		CheckDist = getIO(dummy1);
-   		CheckGS = getIO(dummy2);
+            if (CheckDist!=0 && CheckGS!=0){
+                
+                TODGS = CheckGS;
+                CheckETE = round(CheckDist/(CheckGS/60));
+                TotalETE+=CheckETE;
+                setOutput("CheckETE"+i,CheckETE);
+            
+            
+                if (CheckDist>0) {
+                    if (ClimbRem){
+                        DistClimb-=CheckDist;
+                        if (DistClimb<0){
+                            ClimbRem=false;
+                        }
+                    }
+                }
 
-		if (CheckDist!=0 && CheckGS!=0 && tmp!=null) {
-   			//Time calculations
-                        TODGS = CheckGS;
-   			CheckETE = round(CheckDist/(CheckGS/60));
-			TripETE+=CheckETE;
-                        TotalETE+=CheckETE;    
-                            
-   			CheckETA = (parseInt(tmp[0])*60) +parseInt(tmp[1])+TripETE;
-   			
-   			setOutput(dummy4,round(CheckETE));
-   			setOutput(dummy5,CheckETA);
+                //Fuel calculations
+                if (ClimbRem){
+                    CheckFuel = CheckETE*FuelClimb/TimeClimb;
+                }
+                else{
+                    if (DistClimb<0){
+                        tmpETE = DistClimb*(-1)/(CheckGS/60);
+                        CheckFuel = tmpETE*FuelFlowCruise/60;
+                        tmpDist = CheckDist + DistClimb;
+                        tmpETE = tmpDist/(CheckGS/60);
+                        CheckFuel += (tmpETE*FuelClimb/TimeClimb);
+                        DistClimb = 0;
+                    }
+                    else {
+                        CheckFuel = CheckETE*FuelFlowCruise/60;
+                    }
+                }
+                CheckFuel = round(CheckFuel,1);    
+                TripFuel+=CheckFuel;
+                TotalFuel-=CheckFuel;
 
-			if (CheckDist>0) {
-                            if (ClimbRem){
-                                DistClimb-=CheckDist;
-                                if (DistClimb<0){
-                                    ClimbRem=false;
-                                }
-                            }
-                            
-                            //Fuel calculations
-                            if (ClimbRem){
-                                CheckFuel = CheckETE*FuelClimb/TimeClimb;
-                            }
-                            else{
-                                if (DistClimb<0){
-                                    tmpETE = round(DistClimb*(-1)/(CheckGS/60));
-                                    CheckFuel = CheckETE*FuelFlowCruise/60;
-                                    tmpDist = CheckDist + DistClimb;
-                                    tmpETE = round(tmpDist/(CheckGS/60));
-                                    CheckFuel += (tmpETE*FuelClimb/TimeClimb);
-                                    DistClimb = 0;
-                                }
-                                else {
-                                    CheckFuel = CheckETE*FuelFlowCruise/60;
-                                }
-                            }
-	
-                            TripFuel+=CheckFuel;
-                            TotalFuel-=CheckFuel;
-				
-                            //Set fuel 
-                            setOutput(dummy6,CheckFuel);
-                            setOutput(dummy7,TotalFuel);
-                            
-			}
-		}
+                //Set fuel 
+                setOutput("CheckFuel"+i,CheckFuel);
+                setOutput("CheckFuelRem"+i,TotalFuel);
+            }
+                
+        };
+        
+	var CalculateETA =function (tmp,i){
+            
+            if (CheckDist!=0 && CheckGS!=0 && tmp!=null) {                    
+                    TripETE+=CheckETE;    
+                    CheckETA = (parseInt(tmp[0])*60) +parseInt(tmp[1])+TripETE;
+                    setOutput("CheckETA"+i,CheckETA);
+            }
 	};
+        
+        var ShowCheckRows=function (i){
+            
+            if (CheckDist!=0 && CheckGS!=0){
+
+                CheckLastRow=i+1;
+                
+                if (CheckLastRow>CHKROWS){
+                    CheckLastRow=CHKROWS;                    
+                }
+                showRow("rowCheckpoint"+CheckLastRow, true);
+            }
+            else if (i>CheckLastRow && i>1){
+                    showRow("rowCheckpoint"+i, false);
+                }
+              
+        };
         
 	computeCheck();
         
@@ -1691,16 +1710,18 @@ function computeCheckpoints(){
         DestAlt = getIO("DestAlt");
         
         ClimbRem = true;
-
+        
 	for (i=1;i<=CHKROWS;i++) {
             
                 //sumarize total trip distance
                 TripDist +=	getIO("CheckDist"+i);
                 
+                calcPlannedTimeFuel(i);
+                
 		if (i==1) {
 			if (TakeOff!="") {
 				tmpTime = TakeOff.split(":");
-				Calculations(tmpTime,i);
+				CalculateETA(tmpTime,i);
 			}
 		}
 		else{
@@ -1713,10 +1734,10 @@ function computeCheckpoints(){
                                 if (tmpTime!=null && tmpTime1!=null){
                                     TotalATA += ((parseInt(tmpTime[0])*60) +parseInt(tmpTime[1])) - ((parseInt(tmpTime1[0])*60) +parseInt(tmpTime1[1]));
                                 }	
-                                Calculations(tmpTime,i);
+                                CalculateETA(tmpTime,i);
 			}
 			else{
-				Calculations(tmpTime,i);
+				CalculateETA(tmpTime,i);
 				
 			}
 			
@@ -1727,24 +1748,42 @@ function computeCheckpoints(){
                 setOutput("CheckTotalATA",TotalATA);
                 setOutput("CheckTotalFuelUsd",TripFuel);
                 setOutput("CheckTotalFuelRem",TotalFuel);
-                
+                ShowCheckRows(i);
                 
 	}
     //Set TOC, Cruise, TOD
     if (getIO("CheckIAF")) {
-        IAFAlt = getIO("APCold1");
+        IAFAlt = getIO("CheckIAFAlt")*100;
 	}
     else{
         IAFAlt = DestAlt+1000;
     }
         
-    TODETE = round(((CruiseAlt*100)-(IAFAlt))/500,1);
-    TODDist = round(TODETE*(TODGS/60),1);
-    TODFuelUsed = round(TODETE*FuelFlowCruise/60,1);
+    TODETE = ((CruiseAlt*100)-(IAFAlt))/500;
+    TODDist = TODETE*(TODGS/60);
+    TODFuelUsed = TODETE*FuelFlowCruise/60;
     setOutput("CheckTODDist",TODDist);
     setOutput("CheckTODKias",TODGS);
     setOutput("CheckTODETE",TODETE);
     setOutput("CheckTODFuelUsd",TODFuelUsed);
+    setOutput("CheckVersion",version);    
+    
+    if (TripDist>getIO("EnrtMaxRange")){
+        setOutput("CheckTotalDist",INVALID_INPUT);
+    }
+    if (TotalETE>getIO("EnrtEndurance")){
+        setOutput("CheckTotalETE",INVALID_INPUT);
+    }
+    if (TripFuel>getIO("WBFuel_gal")){
+        setOutput("CheckTotalFuelUsd",INVALID_INPUT);
+        setOutput("CheckTotalFuelRem",INVALID_INPUT);
+    }    
+        
+    if (selectedCheck != "[Current]"){
+        if(CheckLastRow>1 && (getIO("CheckDist"+CheckLastRow) == "0" || getIO("CheckKIAS"+CheckLastRow) == "0")&& !gIO.checkEditable){
+            showRow("rowCheckpoint"+CheckLastRow, false);
+        }
+    }
 }
 
 /*
@@ -1929,6 +1968,7 @@ function computeEnroute () {
 		setIOError("EnrtFuelToDest_gal", "Insufficient fuel");
 		setIOError("EnrtFuelAtDest_gal", "Insufficient fuel");
 	}
+        computeCheckpoints();
 }
 
 /*

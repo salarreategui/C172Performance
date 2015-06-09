@@ -2605,7 +2605,7 @@ gACData.model["150M"] = {
 		name:	"Takeoff 50' obstacle clearance distance",
 		parmNames:	["weight", "temperature", "altitude"],
 		a: [
-		{p:1900, a: [
+		{p:1600, a: [
 			{p:0, a: [
 				{p:0,		v:1245},
 				{p:1000,	v:1365},

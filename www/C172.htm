@@ -1539,9 +1539,12 @@ function logCacheEvent(e) {
 			</tr><tr>
 				<td>Landing rwy. safety factor:</td>
 				<td><input type="number" id="SetLdgSafety" />&thinsp;%</td>
+                        </tr><tr>
+				<td>Checkpoint ATA minutes:</td>
+				<td><input type="number" id="SetMinCheckATA" />&thinsp;min</td>
 			</tr><tr>
 				<td>Start at Emergency page:</td>
-				<td><input type="checkbox" id="SetEmerg" /></td>
+				<td><input type="checkbox" id="SetEmerg" /></td>                                
 			</tr><tr>
 				<td>Altimeter units:</td>
 				<td>
@@ -1578,7 +1581,7 @@ function logCacheEvent(e) {
 						<option value="vSlider">Vernier slider</option>
 						<option value="tPicker">Thumbwheels</option>
 						<option value="keypad">Numeric Keypad</option>
-					</select></td>
+					</select></td>                                        
 			</tr><tr>
 				<td>Reset all input to defaults:</td>
 				<td>
@@ -2086,119 +2089,119 @@ function logCacheEvent(e) {
 		  <tbody>
                       <tr style="background-color: rgb(172,172,193)" >
                         <th align="left">Checkpoints</th>
-                        <th align="left" >Compass<br>Heading</br></th>
-                        <th align="center">Distance</th>
-                        <th align="center">G/S</th>
-                        <th align="left">&Tab;ETE</th>
-                        <th align="left">&Tab;ETA</th>
-                        <th align="left">&Tab;ATA</th>
+                        <th align="left" >HDG&thinsp;&deg;</th>
+                        <th align="left">DIST<br>(nm)</th>
+                        <th align="left">G/S<br>(kt)</th>
+                        <th align="left">&thinsp;E&thinsp;T&thinsp;E&thinsp;</th>
+                        <th align="left">&thinsp;E&thinsp;T&thinsp;A&thinsp;</th>
+                        <th align="left">&thinsp;A&thinsp;T&thinsp;A&thinsp;</th>
                         <th align="left" >Fuel<br>Used</th>
                         <th align="left" >Fuel<br>Rem.</th>			
                         </tr>
-			<tr>
+			<tr id="rowCheckpoint1">
 			<td><input type="text" id="CheckPoint1" value=""></td>
 			<td><input type="text" id="CheckCompHead1">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist1">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS1">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist1"></td>
+			<td><input type="text" id="CheckKIAS1"></td>
 			<td id="CheckETE1">ETE</td>
 			<td id="CheckETA1">ETA</td>
 			<td><input type="text" id="CheckATA1" readonly="" onclick="SetCheckUTCTime('CheckATA1')" size="5"></td>
 			<td><span id="CheckFuel1" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem1" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr id="rowCheckpoint2">
 			<td><input type="text" id="CheckPoint2" value=""></td>
 			<td><input type="text" id="CheckCompHead2">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist2">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS2">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist2"></td>
+			<td><input type="text" id="CheckKIAS2"></td>
 			<td id="CheckETE2">ETE</td>
 			<td id="CheckETA2">ETA</td>
 			<td><input type="text" id="CheckATA2" readonly="" onclick="SetCheckUTCTime('CheckATA2')" size="5"></td>
 			<td><span id="CheckFuel2" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem2" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr id="rowCheckpoint3">
 			<td><input type="text" id="CheckPoint3" value="" ></td>
 			<td><input type="text" id="CheckCompHead3">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist3">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS3">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist3"></td>
+			<td><input type="text" id="CheckKIAS3"></td>
 			<td id="CheckETE3">ETE</td>
 			<td id="CheckETA3">ETA</td>
 			<td><input type="text" id="CheckATA3" readonly="" onclick="SetCheckUTCTime('CheckATA3')" size="5"></td>
 			<td><span id="CheckFuel3" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem3" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr id="rowCheckpoint4">
 			<td><input type="text" id="CheckPoint4" value=""></td>
 			<td><input type="text" id="CheckCompHead4">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist4">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS4">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist4"></td>
+			<td><input type="text" id="CheckKIAS4"></td>
 			<td id="CheckETE4">ETE</td>
 			<td id="CheckETA4">ETA</td>
 			<td><input type="text" id="CheckATA4" readonly="" onclick="SetCheckUTCTime('CheckATA4')" size="5"></td>
 			<td><span id="CheckFuel4" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem4" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-                        <tr>
+                        <tr id="rowCheckpoint5">
 			<td><input type="text" id="CheckPoint5" value=""></td>
 			<td><input type="text" id="CheckCompHead5">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist5">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS5">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist5"></td>
+			<td><input type="text" id="CheckKIAS5"></td>
 			<td id="CheckETE5">ETE</td>
 			<td id="CheckETA5">ETA</td>
 			<td><input type="text" id="CheckATA5" readonly="" onclick="SetCheckUTCTime('CheckATA5')" size="5"></td>
 			<td><span id="CheckFuel5" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem5" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr id="rowCheckpoint6">
 			<td><input type="text" id="CheckPoint6" value=""></td>
 			<td><input type="text" id="CheckCompHead6">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist6">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS6">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist6"></td>
+			<td><input type="text" id="CheckKIAS6"></td>
 			<td id="CheckETE6">ETE</td>
 			<td id="CheckETA6">ETA</td>
 			<td><input type="text" id="CheckATA6" readonly="" onclick="SetCheckUTCTime('CheckATA6')" size="5"></td>
 			<td><span id="CheckFuel6" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem6" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr id="rowCheckpoint7">
 			<td><input type="text" id="CheckPoint7" value="" ></td>
 			<td><input type="text" id="CheckCompHead7">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist7">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS7">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist7"></td>
+			<td><input type="text" id="CheckKIAS7"></td>
 			<td id="CheckETE7">ETE</td>
 			<td id="CheckETA7">ETA</td>
 			<td><input type="text" id="CheckATA7" readonly="" onclick="SetCheckUTCTime('CheckATA7')" size="5"></td>
 			<td><span id="CheckFuel7" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem7" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-                        <tr>
+                        <tr id="rowCheckpoint8">
 			<td><input type="text" id="CheckPoint8" value=""></td>
 			<td><input type="text" id="CheckCompHead8">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist8">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS8">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist8"></td>
+			<td><input type="text" id="CheckKIAS8"></td>
 			<td id="CheckETE8">ETE</td>
 			<td id="CheckETA8">ETA</td>
 			<td><input type="text" id="CheckATA8" readonly="" onclick="SetCheckUTCTime('CheckATA8')" size="5"></td>
 			<td><span id="CheckFuel8" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem8" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-			<tr>
+			<tr  id="rowCheckpoint9">
 			<td><input type="text" id="CheckPoint9" value=""></td>
 			<td><input type="text" id="CheckCompHead9">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist9">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS9">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist9"></td>
+			<td><input type="text" id="CheckKIAS9"></td>
 			<td id="CheckETE9">ETE</td>
 			<td id="CheckETA9">ETA</td>
 			<td><input type="text" id="CheckATA9" readonly="" onclick="SetCheckUTCTime('CheckATA9')" size="5"></td>
 			<td><span id="CheckFuel9" class=" Output" ></span>&thinsp;.gal</td>
 			<td><span id="CheckFuelRem9" class=" Output" ></span>&thinsp;.gal</td>
 			</tr>
-                        <tr>
+                        <tr id="rowCheckpoint10">
 			<td><input type="text" id="CheckPoint10" value=""></td>
 			<td><input type="text" id="CheckCompHead10">&thinsp;&deg;</td>
-			<td><input type="text" id="CheckDist10">&thinsp;nm.</td>
-			<td><input type="text" id="CheckKIAS10">&thinsp;kt.</td>
+			<td><input type="text" id="CheckDist10"></td>
+			<td><input type="text" id="CheckKIAS10"></td>
 			<td id="CheckETE10">ETE</td>
 			<td id="CheckETA10">ETA</td>
 			<td><input type="text" id="CheckATA10" readonly="" onclick="SetCheckUTCTime('CheckATA10')" size="5"></td>
@@ -2208,7 +2211,7 @@ function logCacheEvent(e) {
                         <tr style="background-color: rgb(172,172,193)">
                             <td>TOTALS:</td>
                             <td></td>
-                            <td><span id="CheckTotalDist" class=" Output" align="rigth" ></span>&thinsp;nm.</td>
+                            <td><span id="CheckTotalDist" class=" Output"></span>&thinsp;nm.</td>
                             <td></td>
                             <td><span id="CheckTotalETE" class=" Output" ></span></td>
                             <td></td>
@@ -2226,18 +2229,21 @@ function logCacheEvent(e) {
 		<table class="iTable">
                 <tr>
                     <td>TOC</td>
-                    <td><span id="CheckTOCDist" class=" Output" align="rigth" ></span>&thinsp;nm.</td>
-                    <td><span id="CheckTOCKias" class=" Output" align="rigth" ></span>&thinsp;kt.</td>
+                    <td><span id="CheckTOCDist" class=" Output"></span>&thinsp;nm.</td>
+                    <td><span id="CheckTOCKias" class=" Output"></span>&thinsp;kt.</td>
                     <td><span id="CheckTOCETE" class=" Output" ></span>&thinsp;ETE</td>
                     <td><span id="CheckTOCFuelUsd" class=" Output" ></span>&thinsp;.gal</td>
+                    <td>&emsp; <button type="button" id="EstButton" onclick="showEstimates()">ETAs</button></td>
                 </tr>
                 <tr>
                     <td>TOD</td>
-                    <td><span id="CheckTODDist" class=" Output" align="rigth" ></span>&thinsp;nm.</td>
-                    <td><span id="CheckTODKias" class=" Output" align="rigth" ></span>&thinsp;kt.</td>
+                    <td><span id="CheckTODDist" class=" Output"></span>&thinsp;nm.</td>
+                    <td><span id="CheckTODKias" class=" Output"></span>&thinsp;kt.</td>
                     <td><span id="CheckTODETE" class=" Output" ></span>&thinsp;ETE</td>
                     <td><span id="CheckTODFuelUsd" class=" Output" ></span>&thinsp;.gal</td>
                     <td><input type="checkbox" id="CheckIAF" />IAF</td>
+                    <td><input type="text" id="CheckIAFAlt">&thinsp;00 ft.</td>
+                    <td style="font-size: x-small"><span id="CheckVersion" class=" Output"></span></td>
                 </tr>
 			
 		</table>

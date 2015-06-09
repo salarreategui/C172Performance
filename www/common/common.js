@@ -17,6 +17,7 @@ var CHKROWS = 10;						// number of checkpoints rows
 var CheckNextEvent = BS;
 var CheckRow =1;
 var CheckEndFlight = false;
+var CheckLastRow=1;
 
 function setup (pageDesc, inputDesc, outputDesc) {
 	if (gUI.style != "small") {
@@ -198,7 +199,7 @@ var dialog = {
 		dlog = this._dialog = document.createElement('div');
 		dlog.id = 'dialog-wrapper';
 		// set up the slide in/out transition
-		html = '<div id="dialog-text">'+text+'</div><table><tr>';
+                html = '<div id="dialog-text">'+text+'</div><table><tr>';
 		for (i = 0; i < choices.length; i++) {
 			html += '\
 				<td style="width:'+round(100/choices.length)+'%">\
@@ -1363,13 +1364,15 @@ function CheckReset(type){
                                     //getElt(getCurrentUnitsID(ATA+i)).value ="";
                                     getElt(getCurrentUnitsID(ATA+i)).disabled = false;
                                     if (type=="All"){
-                                        setInput("CheckPoint"+i,"");
-                                        setInput("CheckCompHead"+i,"360");
+                                        CheckLastRow=1;
                                         setInput("CheckDist"+i,"0");
                                         setInput("CheckKIAS"+i,"0");
+                                        setInput("CheckPoint"+i,"");
+                                        setInput("CheckCompHead"+i,"360");
                                         setupInput("SelectedCheck", "[Current]");
                                     }
                             }
+                            setRowBackgroundColor();
                         }
                     }
                 );
@@ -1383,9 +1386,8 @@ function showCheck (id) {
     var nextrow;
 	// Show the check page.
 	showElt(id, true);
-//        showElt("CheckName",false);
-//        showElt("editCheckButton",false);
         selectCheck();
+        CheckLastRow=1;
         //cickable button set status
 
         if (getElt(getCurrentUnitsID(BS)).value!=""){
@@ -1423,7 +1425,7 @@ function CheckDone () {
 /*
  * Format time.
  */
-function pad(n, width, z) {
+function padTime(n, width, z) {
 		  z = z || '0';
 		  n = n + '';
 		  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
@@ -1434,44 +1436,123 @@ function pad(n, width, z) {
 function SetCheckUTCTime(id){
 	//set time in UTC
 	var d= new Date(); 
-	var h = pad(d.getUTCHours(),2);
-    var m = pad(d.getUTCMinutes(),2);
+	var h,m;
 	var time;
-        
+        var minToAdd = getIO("SetMinCheckATA");
+        var totalETE = getIO("CheckTotalETE");
 
-    time = h + ":" + m;
-        if (id==BE){
-            if (CheckEndFlight){
-                dialog.confirm("End of Flight?",
-		function (yes) {
-			if (yes) {
-                            CheckRow = CHKROWS+1;
-                            CheckNextEvent = ATA+CheckRow;
-                            setInput (id, time);
-                            getElt(getCurrentUnitsID(id)).disabled = true;
-                        }
-                    }
-                );
+    if (totalETE>0 && totalETE!= INVALID_INPUT){                           
+        if(id !==BS && id !==BE){
+            if(minToAdd !== ""){
+               d.setMinutes(d.getMinutes() + minToAdd);
             }
         }
-    
-	if (id==CheckNextEvent) {
-            
-            if (id==BS){
-                CheckNextEvent = TOF;
+        h = padTime(d.getUTCHours(),2);
+        m = padTime(d.getUTCMinutes(),2);
+        time = h + ":" + m;
+            if (id==BE){
+                if (CheckEndFlight){
+                    dialog.confirm("End of Flight?",
+                    function (yes) {
+                            if (yes) {
+                                CheckRow = CHKROWS+1;
+                                CheckNextEvent = ATA+CheckRow;
+                                setInput (id, time);
+                                getElt(getCurrentUnitsID(id)).disabled = true;
+                            }
+                        }
+                    );
+                }
             }
-            else{
-                CheckNextEvent = ATA+CheckRow;
-                CheckRow+=1;
-                CheckEndFlight = true;
-            }
-            setInput (id, time);
-            getElt(getCurrentUnitsID(id)).disabled = true;
-            
-	}
 
+            if (id==CheckNextEvent) {
+
+                if (id==BS){
+                    CheckNextEvent = TOF;
+            }
+                else{
+                    CheckNextEvent = ATA+CheckRow;
+                    setRowBackgroundColor("FLT");
+                    CheckRow+=1;
+                    CheckEndFlight = true;
+                }
+                setInput (id, time);
+                getElt(getCurrentUnitsID(id)).disabled = true;
+
+            }
+    }
 
 }
+///*
+// * show only checkpoint estimates.
+// */
+function showEstimates (){
+    var checkpoint="",checkETA="",message="",strTmp="",strTime="";
+    
+    for (i=1;i <= CHKROWS; i++) {
+
+        checkpoint = getIO("CheckPoint"+i);
+        checkETA = getIO("CheckETA"+i);
+    
+        if (checkpoint[0]=="@" && checkETA!==INVALID_NULL){
+            strTmp = checkpoint.substring(1,checkpoint.length);
+            strTime = fmtTime(checkETA);
+            message+="<tr><td style=color:darkblue>"+strTmp.trim()+"</td><td style=color:green>"+strTime+"</td></tr>";
+        }
+        
+    }
+    if (message!=""){
+        message="*** Enroute Checkpoint Estimates ***<br><br><table><tbody>"+message+"</table></tbody>"; 
+    }
+    else{
+        message="No checkpoints or ETAs found";
+    }
+    notice(message);
+
+}
+///*
+// * Changes row and ids background color.
+// */
+function setRowBackgroundColor (type){
+            var e,i;
+            var selected ="lightgoldenrodyellow";
+            var nonselected = "white";
+            
+            var setIdsBackgroundColor = function (color,i){        
+                var e,rowid;
+                var ids = getIdList("<page:Check;io:input>");
+
+                for (rowid in ids) {
+                    if (rowid == "CheckPoint"+i ||rowid == "CheckCompHead"+i ||rowid == "CheckDist"+i ||rowid == "CheckKIAS"+i){
+                        e=getElt(rowid);
+                        e.style.backgroundColor=color;
+                    }
+
+                }
+            };
+            
+            
+                
+            if (type=="FLT"){
+                if(CheckRow <= CHKROWS){
+                    e = getElt("rowCheckpoint"+CheckRow);
+                    e.style.backgroundColor=selected;
+                    setIdsBackgroundColor(selected,CheckRow);
+                }
+                if (CheckRow>1){
+                    e = getElt("rowCheckpoint"+(CheckRow-1));
+                    e.style.backgroundColor=nonselected;
+                    setIdsBackgroundColor(nonselected,CheckRow-1);
+                }
+            }
+            else {
+                for (i=1;i <= CHKROWS; i++) {
+                    e = getElt("rowCheckpoint"+i);
+                    e.style.backgroundColor=nonselected;
+                    setIdsBackgroundColor(nonselected,i);
+                }
+            }
+        };
 ///*
 // * Create a new check. Called from new check button.
 // */
@@ -1612,6 +1693,7 @@ function editCheck (editable) {
 	} else if (editable == undefined) {
 		// If editable is not given, then toggle it. This form is called from the "Edit/Done" button.
 		editable = !gIO.checkEditable;
+                showRow("rowCheckpoint"+CheckLastRow, editable);
 	}
 	gIO.checkEditable = editable;
 	// Set field disabled property based in editability.

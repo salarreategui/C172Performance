@@ -214,6 +214,29 @@ input.S7 {
 	text-align: left;
 }
 
+input.S15 {
+	min-width: 4em;
+	max-width: 15em;
+	text-transform: uppercase;
+	text-align: left;
+}
+
+#CheckDist1,#CheckKIAS1,#CheckDist2,#CheckKIAS2,#CheckDist3,#CheckKIAS3,
+#CheckDist4,#CheckKIAS4,#CheckDist5,#CheckKIAS5,#CheckDist6,#CheckKIAS6,
+#CheckDist7,#CheckKIAS7,#CheckDist8,#CheckKIAS8,#CheckDist9,#CheckKIAS9,
+#CheckDist10,#CheckKIAS10{
+	text-align: left;
+}
+/*#CheckETE1,#CheckETE2,#CheckETE3,#CheckETE4,#CheckETE5,
+#CheckETE6,#CheckETE7,#CheckETE8,#CheckETE9,#CheckETE10,
+#CheckETA1,#CheckETA2,#CheckETA3,#CheckETA4,#CheckETA5,
+#CheckETA6,#CheckETA7,#CheckETA8,#CheckETA9,#CheckETA10,
+#CheckATA1,#CheckATA2,#CheckATA3,#CheckATA4,#CheckATA5,
+#CheckATA7,#CheckATA7,#CheckATA8,#CheckATA9,#CheckATA10,
+#CheckTotalETE,#CheckTotalATA{
+    text-align: center;
+}*/
+
 #DestWindDir, #DepWindDir, #DestWind, #DepWind {
 	text-align: right;
 }

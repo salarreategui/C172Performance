@@ -147,6 +147,9 @@ function setInputField (id, value) {
 	var elt;
 
 	assert(io && io.input, "setInputField: bad type for id: " + id);
+        if (io.desc.type[2]=="h"){
+            value =("000" + value).slice(-3);   
+        }
 	switch(io.desc.type[0]) {
 	case "c":				// checkbox
 		if (!isValid(value)) {
@@ -183,7 +186,7 @@ function setInputField (id, value) {
 		break;
 	case "T":
 		getElt(id).innerHTML = value;
-		break;
+		break;           
 	default:				// everything else
 		getElt(id).value = value;
 		break;
