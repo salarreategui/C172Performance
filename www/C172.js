@@ -1770,20 +1770,18 @@ function computeCheckpoints(){
                 } 
             }
             
-            if (i>1){
-                if (CheckDist!=0 && CheckGS!=0){
-                    showRow("rowCheckpoint"+i, true);
-                }
-                else {
-                    if (i!=CheckLastRow){
-                        SetCheckUTCTime(ATA+i,false);
-                    }
-                    if (i>CheckLastRow && i>1){
-                        showRow("rowCheckpoint"+i, false);
-                    }
-                }
+
+            if (CheckDist!=0 && CheckGS!=0){
+                showRow("rowCheckpoint"+CheckLastRow, true);
             }
-              
+            else {
+                if (i!=CheckLastRow){
+                    SetCheckUTCTime(ATA+i,false);
+                }
+                if (i>CheckLastRow && i>1){
+                    showRow("rowCheckpoint"+i, false);
+                }
+            }            
         };
         
 	computeCheck();
