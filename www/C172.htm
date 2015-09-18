@@ -228,6 +228,8 @@ if (gDev.phoneGap) {
 	gAjaxURL = "http://www.pohperformance.com/" + gAppID + "/";
 } else if (document.location.protocol == "file:") {
 	gAjaxURL = "http://www.pohperformancetest.com/" + gAppID + "/";
+} else if (document.location.protocol == "http:") {
+    gAjaxURL = "http://www.pohperformance.com/" + gAppID + "/";
 }
 if (location.href.match(/pohperformancetest\.com/)) {
 	alert("You are using a test site. Please use http://pohperformance.com/"+gAppID+"/"+gAppID+".htm instead");
@@ -615,7 +617,7 @@ function logCacheEvent(e) {
 	<div id="WBOutput">
 	<table class="borderHeader">
 		<td>Results</td>
-		<td><button type="button" class="inputButton" onclick="mailWB()">Email</button></td>
+		<td><button type="button" class="inputButton" onclick="mailWB('WP')">Email</button></td>
 	</table>
 	<div class="border">
 	<table class="oTable">
@@ -2063,7 +2065,8 @@ function logCacheEvent(e) {
                                         &emsp; <button type="button" id="addCheckButton" onclick="newCheck()">New</button>
                                         &emsp; <button type="button" id="editCheckButton" onclick="editCheck()">Edit</button>
                                         &emsp; <button type="button" id="delCheckButton" onclick="deleteCheck()">Delete</button>
-                                </td> 
+                                </td>
+                                <td><button type="button" id="CheckEmailButton" class="headerButton" onclick="mailCheck()">Email</button></td>
                             </tr>
                             </tbody>
                 </table>

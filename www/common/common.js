@@ -1420,6 +1420,10 @@ function showCheck (id) {
  * Called to exit the help system.
  */
 function CheckDone () {
+    var selectedCheck = getIO("SelectedCheck");
+    if (gIO.checkEditable == true && selectedCheck != "[Current]")
+        notice("Enroute checkpoint is being edited");
+    else        
 	showElt("CheckPage", false);			// turn off the check page
 }
 /*
@@ -1589,9 +1593,9 @@ function newCheck () {
 	setupInput("CheckName", checkName);	// setup new check name
         gIO.checks.push(check);
         setCheckFromPage(gIO.checks.length - 1);
-        gIO.checks.sort(function (a, b) {
-                return (a["CheckName"] < b["CheckName"]? -1: (a["CheckName"] > b["CheckName"]? 1: 0));
-        });
+//        gIO.checks.sort(function (a, b) {
+//                return (a["CheckName"] < b["CheckName"]? -1: (a["CheckName"] > b["CheckName"]? 1: 0));
+//        });
         setCheckOptions(checkName);
         selectCheck();
         editCheck(true);
@@ -1642,6 +1646,10 @@ function findCheckIndex (checkName) {
  */
 function setCheckOptions (checkName) {
 	var i;
+        
+        gIO.checks.sort(function (a, b) {
+                return (a["CheckName"] < b["CheckName"]? -1: (a["CheckName"] > b["CheckName"]? 1: 0));
+        });
 
 	clearOptions("SelectedCheck");
 	addOption("SelectedCheck", "[Current]");

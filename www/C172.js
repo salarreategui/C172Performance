@@ -1372,46 +1372,71 @@ function drawWB (toCG, toWeight, ldgCG, ldgWeight, zfCG, zfWeight) {
 /*
  * Mail W&B info.
  */
-function mailWB () {
+function mailWB (type) {
 	var to = getIO("SetEmail");
 	var subject = "Weight and Balance Results";
 	var content;
 	var url;
-
-	// Send fuel data
-	if (getIO("SetFuelUnits") == "gal") {
-		content = "Fuel = "+getIO("WBFuel_gal")+" gal.\n";
-		content += "Fuel Used = "+getIO("WBFuelUsed_gal")+" gal.\n";
-	} else {
-		content = "Fuel = "+getIO("WBFuel_l")+" l.\n";
-		content += "Fuel Used = "+getIO("WBFuelUsed_l")+" l.\n";
-	}
-	// Send W&B data
-	if (getIO("SetWeightUnits") == "lbs") {
-		content += "Row 1 Left = "+getIO("WBRow1L_lbs")+" lbs.\n";
-		content += "Row 1 Right = "+getIO("WBRow1R_lbs")+" lbs.\n";
-		content += "Row 2 Left = "+getIO("WBRow2L_lbs")+" lbs.\n";
-		content += "Row 2 Right = "+getIO("WBRow2R_lbs")+" lbs.\n";
-		content += "Rear baggage area 1 = "+getIO("WBBaggage1_lbs")+" lbs.\n";
-		content += "Rear baggage area 2 = "+getIO("WBBaggage2_lbs")+" lbs.\n";
-		content += "\n";
-		content += "Takeoff weight = "+getIO("WBTOWeight_lbs")+" lbs.\n";
-		content += "Takeoff CG = "+getIO("WBTOCG")+"in\n";
-		content += "Landing weight = "+getIO("WBLdgWeight_lbs")+" lbs.\n";
-		content += "Landing CG = "+getIO("WBLdgCG")+"in\n";
-	} else {
-		content += "Row 1 Left = "+getIO("WBRow1L_kg")+" kg.\n";
-		content += "Row 1 Right = "+getIO("WBRow1R_kg")+" kg.\n";
-		content += "Row 2 Left = "+getIO("WBRow2L_kg")+" kg.\n";
-		content += "Row 2 Right = "+getIO("WBRow2R_kg")+" kg.\n";
-		content += "Rear baggage area 1 = "+getIO("WBBaggage1_kg")+" kg.\n";
-		content += "Rear baggage area 2 = "+getIO("WBBaggage2_kg")+" kg.\n";
-		content += "\n";
-		content += "Takeoff weight = "+getIO("WBTOWeight_kg")+" kg.\n";
-		content += "Takeoff CG = "+getIO("WBTOCG")+"in\n";
-		content += "Landing weight = "+getIO("WBLdgWeight_kg")+" kg.\n";
-		content += "Landing CG = "+getIO("WBLdgCG")+"in\n";
-	}
+        var d= new Date();
+        
+        if (type=="WP"){
+            content = "WEIGHT AND BALANCE\n\n";
+            content+= "Units: LBS\n";
+            content+= "Date "+d.toLocaleDateString();
+            content+= "\t\t\tReg "+getIO("SelectedAC")+"\n\n";
+            
+            content+= "Trip "+getIO("SelectedTrip")+"\n\n";
+            
+            content+= "Max TakeOff Weight\t\t\t"+getACData("WBMaxTOWeight")+" lbs.\n";
+            content+= "Basic Empty Weight\t\t\t"+getACData("WBBEWeight").weight+" lbs.\n";
+            content+= "Pilots Weight\t\t\t\t\t"+ (parseInt(getIO("WBRow1L_lbs"))+parseInt(getIO("WBRow1R_lbs")))+" lbs.\n";
+            content+= "Passenger Weight\t\t\t\t"+ (parseInt(getIO("WBRow2L_lbs"))+parseInt(getIO("WBRow2R_lbs")))+" lbs.\n";
+            content+= "Fuel Weight\t\t\t\t\t"+ (parseInt(getIO("WBFuel_gal"))*6)+" lbs.\n";
+            content+= "Cargo & Bagg Weight\t\t\t"+ (parseInt(getIO("WBBaggage1_lbs"))+parseInt(getIO("WBBaggage2_lbs")))+" lbs.\n\n";
+            
+            content+= "Actual TakeOff Weight\t\t\t"+getIO("WBTOWeight_lbs")+" lbs.\n";
+            content+= "Under Load\t\t\t\t\t"+(parseInt(getACData("WBMaxTOWeight"))-parseInt(getIO("WBTOWeight_lbs")))+" lbs.\n\n";
+            
+            
+            
+            
+        }
+        else if (type==undefined){
+            // Send fuel data
+            if (getIO("SetFuelUnits") == "gal") {
+                    content = "Fuel = "+getIO("WBFuel_gal")+" gal.\n";
+                    content += "Fuel Used = "+getIO("WBFuelUsed_gal")+" gal.\n";
+            } else {
+                    content = "Fuel = "+getIO("WBFuel_l")+" l.\n";
+                    content += "Fuel Used = "+getIO("WBFuelUsed_l")+" l.\n";
+            }
+            // Send W&B data
+            if (getIO("SetWeightUnits") == "lbs") {
+                    content += "Row 1 Left = "+getIO("WBRow1L_lbs")+" lbs.\n";
+                    content += "Row 1 Right = "+getIO("WBRow1R_lbs")+" lbs.\n";
+                    content += "Row 2 Left = "+getIO("WBRow2L_lbs")+" lbs.\n";
+                    content += "Row 2 Right = "+getIO("WBRow2R_lbs")+" lbs.\n";
+                    content += "Rear baggage area 1 = "+getIO("WBBaggage1_lbs")+" lbs.\n";
+                    content += "Rear baggage area 2 = "+getIO("WBBaggage2_lbs")+" lbs.\n";
+                    content += "\n";
+                    content += "Takeoff weight = "+getIO("WBTOWeight_lbs")+" lbs.\n";
+                    content += "Takeoff CG = "+getIO("WBTOCG")+"in\n";
+                    content += "Landing weight = "+getIO("WBLdgWeight_lbs")+" lbs.\n";
+                    content += "Landing CG = "+getIO("WBLdgCG")+"in\n";
+            } else {
+                    content += "Row 1 Left = "+getIO("WBRow1L_kg")+" kg.\n";
+                    content += "Row 1 Right = "+getIO("WBRow1R_kg")+" kg.\n";
+                    content += "Row 2 Left = "+getIO("WBRow2L_kg")+" kg.\n";
+                    content += "Row 2 Right = "+getIO("WBRow2R_kg")+" kg.\n";
+                    content += "Rear baggage area 1 = "+getIO("WBBaggage1_kg")+" kg.\n";
+                    content += "Rear baggage area 2 = "+getIO("WBBaggage2_kg")+" kg.\n";
+                    content += "\n";
+                    content += "Takeoff weight = "+getIO("WBTOWeight_kg")+" kg.\n";
+                    content += "Takeoff CG = "+getIO("WBTOCG")+"in\n";
+                    content += "Landing weight = "+getIO("WBLdgWeight_kg")+" kg.\n";
+                    content += "Landing CG = "+getIO("WBLdgCG")+"in\n";
+            }
+        }
 	// build the url
 	url = "mailto:";
 	url += to+"?";
@@ -1603,6 +1628,57 @@ function computeDeparture () {
 	);
 }
 /*
+ * Mail W&B info.
+ */
+function mailCheck () {
+	var to = getIO("SetEmail");
+	var subject = "Enroute Checkpoint "+getIO("SelectedCheck")+ " Overview";
+	var content,contentcheck="";
+	var url;
+        
+        /**
+        * @param {*}       str                         input string, or any other type (will be converted to string)
+        * @param {number}  length                      desired length to pad the string to
+        * @param {Object}  [opts]
+        * @param {string}  [opts.padWith=" "]          char to use for padding
+        * @param {boolean} [opts.padLeft=false]        whether to pad on the left
+        * @param {boolean} [opts.collapseEmpty=false]  whether to return an empty string if the input was empty
+        * @returns {string}
+        */
+       function pad ( str, length, opts ) {
+           var padding = ( new Array( Math.max( length - ( str + "" ).length + 1, 0 ) ) ).join( opts && opts.padWith || " " ),
+               collapse = opts && opts.collapseEmpty && !( str + "" ).length;
+           return collapse ? "" : opts && opts.padLeft ? padding + str : str + padding;
+       }
+               
+        content = "Block Start: "+getIO("CheckBStart")+ "\t\tTake Off: "+getIO("CheckTakeOff")+"\t\tBlock End: "+getIO("CheckBEnd")+"\n\n";
+        contentcheck = "CHECKPOINTS\t\t\tHDG"+"\tDIST\tG/S\t\tE T E\tE T A\t\tA T A\tFUEL USED\tFUEL REM.\n\n";
+        
+        for (i=1;i<=CHKROWS;i++){
+            if (getIO("CheckDist"+i)!="0" && getIO("CheckKIAS"+i)!="0"){
+                contentcheck +=  getIO("CheckPoint"+i)+"\t\t\t\t";
+                contentcheck +=  pad(getIO("CheckCompHead"+i),3,{ padWith: "0", padLeft: true })+"\t\t";
+                contentcheck +=  getIO("CheckDist"+i)+"\t\t";
+                contentcheck +=  getIO("CheckKIAS"+i)+"\t\t";
+                contentcheck +=  pad(getIO("CheckETE"+i),2,{ padWith: "0", padLeft: true })+"\t\t";
+                contentcheck +=  fmtTime(roundZTime(getIO("CheckETA"+i)))+"\t\t";
+                contentcheck +=  pad(getIO("CheckATA"+i),4,{ padWith: "-", padLeft: false })+"\t\t";
+                contentcheck +=  getIO("CheckFuel"+i)+"\t\t";
+                contentcheck +=  getIO("CheckFuelRem"+i)+"\n";
+            }
+        }
+        
+        contentcheck+="\n\nTOTALS\t\t\t\t\t"+getIO("CheckTotalDist")+"\t\t\t\t\t\t"+fmtTime(roundZTime(getIO("CheckTotalETE")))+"\t"+fmtTime(roundZTime(getIO("CheckTotalATA")))+"\t\t\t\t\t"+getIO("CheckTotalFuelUsd")+"\t\t"+getIO("CheckTotalFuelRem")+"\n\n";
+        
+	// build the url
+	url = "mailto:";
+	url += to+"?";
+	url += "Subject="+encodeURIComponent(subject);
+	url += "&body="+encodeURIComponent(content+contentcheck);
+	// send email
+	location.href = url;
+}
+/*
  * Compute computeCheckpoints.
  */
 function computeCheckpoints(){
@@ -1612,7 +1688,7 @@ function computeCheckpoints(){
         var CruiseAlt,DestAlt,IAFAlt;
         var CheckDist,CheckGS;
         var selectedCheck = getIO("SelectedCheck");
-        var version = "v.1.0.1";
+        var version = "v.1.0.2";
         
         
 	TripDist=0,TripETE=0,TripETEFuel=0,TripFuel=0;
@@ -1683,18 +1759,30 @@ function computeCheckpoints(){
         
         var ShowCheckRows=function (i){
             
-            if (CheckDist!=0 && CheckGS!=0){
+            for (j=1;j<=CHKROWS;j++) {
+                if (getIO("CheckDist"+j)!=0 && getIO("CheckKIAS"+j)!=0){
 
-                CheckLastRow=i+1;
-                
-                if (CheckLastRow>CHKROWS){
-                    CheckLastRow=CHKROWS;                    
-                }
-                showRow("rowCheckpoint"+CheckLastRow, true);
+                    CheckLastRow=j+1;
+
+                    if (CheckLastRow>CHKROWS){
+                        CheckLastRow=CHKROWS;                    
+                    }
+                } 
             }
-            else if (i>CheckLastRow && i>1){
-                    showRow("rowCheckpoint"+i, false);
+            
+            if (i>1){
+                if (CheckDist!=0 && CheckGS!=0){
+                    showRow("rowCheckpoint"+i, true);
                 }
+                else {
+                    if (i!=CheckLastRow){
+                        SetCheckUTCTime(ATA+i,false);
+                    }
+                    if (i>CheckLastRow && i>1){
+                        showRow("rowCheckpoint"+i, false);
+                    }
+                }
+            }
               
         };
         
