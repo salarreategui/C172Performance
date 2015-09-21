@@ -2,8 +2,8 @@
 <widget xmlns="http://www.w3.org/ns/widgets"
 	xmlns:gap="http://phonegap.com/ns/1.0"
 	id="com.pohperformance.C172"
-	version="2.4.2"
-	versionCode="17"> <!-- vers chg: version, increment versionCode (Android submitted bundle number) -->
+	version="2.4.0"
+	versionCode="15"> <!-- vers chg: version, increment versionCode (Android submitted bundle number) -->
 	<name>
 		Cessna 172 Performance
 	</name>
