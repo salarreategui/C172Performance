@@ -1388,14 +1388,14 @@ function mailWB (type) {
             content+= "Trip "+getIO("SelectedTrip")+"\n\n";
             
             content+= "Max TakeOff Weight\t\t\t"+getACData("WBMaxTOWeight")+" lbs.\n";
-            content+= "Basic Empty Weight\t\t\t"+getACData("WBBEWeight").weight+" lbs.\n";
+            content+= "Basic Empty Weight\t\t\t"+getIO("ACBEW_lbs")+" lbs.\n";
             content+= "Pilots Weight\t\t\t\t\t"+ (parseInt(getIO("WBRow1L_lbs"))+parseInt(getIO("WBRow1R_lbs")))+" lbs.\n";
             content+= "Passenger Weight\t\t\t\t"+ (parseInt(getIO("WBRow2L_lbs"))+parseInt(getIO("WBRow2R_lbs")))+" lbs.\n";
             content+= "Fuel Weight\t\t\t\t\t"+ (parseInt(getIO("WBFuel_gal"))*6)+" lbs.\n";
             content+= "Cargo & Bagg Weight\t\t\t"+ (parseInt(getIO("WBBaggage1_lbs"))+parseInt(getIO("WBBaggage2_lbs")))+" lbs.\n\n";
             
-            content+= "Actual TakeOff Weight\t\t\t"+getIO("WBTOWeight_lbs")+" lbs.\n";
-            content+= "Under Load\t\t\t\t\t"+(parseInt(getACData("WBMaxTOWeight"))-parseInt(getIO("WBTOWeight_lbs")))+" lbs.\n\n";
+            content+= "Actual TakeOff Weight\t\t\t"+getIO("WBRampWeight_lbs")+" lbs.\n";
+            content+= "Under Load\t\t\t\t\t"+(parseInt(getACData("WBMaxTOWeight"))-parseInt(getIO("WBRampWeight_lbs")))+" lbs.\n\n";
             
             
             
@@ -1688,7 +1688,7 @@ function computeCheckpoints(){
         var CruiseAlt,DestAlt,IAFAlt;
         var CheckDist,CheckGS;
         var selectedCheck = getIO("SelectedCheck");
-        var version = "v.1.0.2";
+        var version = "v.1.0.3";
         
         
 	TripDist=0,TripETE=0,TripETEFuel=0,TripFuel=0;
@@ -1760,6 +1760,9 @@ function computeCheckpoints(){
         var ShowCheckRows=function (i){
             
             for (j=1;j<=CHKROWS;j++) {
+                if (j==1){
+                    showRow("rowCheckpoint"+j, true);
+                }
                 if (getIO("CheckDist"+j)!=0 && getIO("CheckKIAS"+j)!=0){
 
                     CheckLastRow=j+1;
@@ -1767,18 +1770,16 @@ function computeCheckpoints(){
                     if (CheckLastRow>CHKROWS){
                         CheckLastRow=CHKROWS;                    
                     }
+                    showRow("rowCheckpoint"+CheckLastRow, true);
                 } 
             }
             
             if (i>1){
-                if (CheckDist!=0 && CheckGS!=0){
-                    showRow("rowCheckpoint"+i, true);
-                }
-                else {
+                if (CheckDist==0 || CheckGS==0){                   
                     if (i!=CheckLastRow){
                         SetCheckUTCTime(ATA+i,false);
                     }
-                    if (i>CheckLastRow && i>1){
+                    if (i>CheckLastRow){
                         showRow("rowCheckpoint"+i, false);
                     }
                 }
